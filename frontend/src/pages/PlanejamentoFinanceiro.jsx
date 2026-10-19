@@ -417,6 +417,15 @@ export default function PlanejamentoFinanceiro() {
         // "Em Andamento" cobre também "Em Andamento (Atrasado)"
         if (filtroStatus === 'Em Andamento') { if (!st.startsWith('Em Andamento')) return false }
         else if (st !== filtroStatus) return false
+      } else {
+        // Sem filtro de status escolhido: esconde só os INATIVOS (Concluído/
+        // Arquivado) por padrão. Pendência e Aguardando Faturamento continuam
+        // visíveis — não são "inativos", são projetos que precisam de atenção.
+        // Esse filtro já existia e funcionava, mas sumiu sem querer como efeito
+        // colateral do commit d7e3162 (correção de outro bug de soma de valores).
+        // Pendência do Beto/chefe, revisão de 02-06/10.
+        const st = p.Status || ''
+        if (st === 'Concluído' || st === 'Arquivado') return false
       }
       if (filtroBusca) {
         const b = filtroBusca.toLowerCase()
