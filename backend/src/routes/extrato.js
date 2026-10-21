@@ -7,6 +7,18 @@ const db = process.env.USE_POSTGRES === 'true'
 const router = express.Router();
 router.use(authMiddleware);
 
+// Financeiro_OPP.Valor tem registro antigo em formato EN ("47370.88") e novo
+// em formato BR ("47.370,88") desde a correção de 21/10/2026 no sync de
+// oppService.js. parseFloat cru só lê o formato EN certo — esse parser lê os
+// dois, mesma lógica já usada em medicoesService.js pro mesmo tipo de campo.
+function pBROpp(v) {
+  const s = String(v || 0).trim();
+  if (s.includes(',')) return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
+  const partes = s.split('.');
+  if (partes.length === 2 && partes[1].length <= 2) return parseFloat(s) || 0;
+  return parseFloat(s.replace(/\./g, '')) || 0;
+}
+
 // Classifica uma categoria OPP em grupo financeiro
 function classificarCategoria(categoria) {
   const c = (categoria || '').trim();
@@ -121,7 +133,7 @@ router.get('/:idProjeto', async (req, res, next) => {
     for (const l of lancamentos) {
       const grupo = classificarCategoria(l.Categoria);
       if (!gruposExec[grupo]) { gruposExec[grupo] = 0; detalhesPorGrupo[grupo] = []; }
-      const val = parseFloat(l.Valor || 0);
+      const val = pBROpp(l.Valor || 0);
       gruposExec[grupo] += val;
       detalhesPorGrupo[grupo].push({
         categoria: l.Categoria,
@@ -136,7 +148,7 @@ router.get('/:idProjeto', async (req, res, next) => {
     // 5. Planejado: extrai do baseline
     const planejado = {};
     if (baseline) {
-      const valorContrato = parseFloat(baseline.valorContrato || plano?.Valor_Contrato || projeto?.Valor_Global || 0);
+      const valorContrato = pBROpp(baseline.valorContrato || plano?.Valor_Contrato || projeto?.Valor_Global || 0);
       const impostosPerc  = parseFloat(baseline.impostosPerc || 16.33) / 100;
       const taxaAdmPerc   = parseFloat(baseline.taxaAdmPerc  || 12)    / 100;
       const comissaoPerc  = parseFloat(baseline.comissaoPerc || 7.5)   / 100;

@@ -278,6 +278,19 @@ async function listarComPaginacao(endpoint, filtros = {}) {
   return todos;
 }
 
+// Converte um número (vindo da API do OPP, em JSON — formato EN mesmo
+// quando tem centavos) pro formato de texto que o resto do sistema espera
+// ao ler esses campos com parseBR (BR: vírgula decimal). Gravar um valor
+// com centavos usando String(numero) puro grava em formato EN (ex.:
+// "47370.88"), e isso é lido errado por qualquer tela que use parseBR nesse
+// campo depois — o ponto decimal é removido como se fosse separador de
+// milhar, inflando o valor em 100x. Foi exatamente esse bug, só que na
+// listagem de planejamentos, que causou os valores 100x inflados em
+// Aprovações/Baseline (corrigido em 21/10/2026) — e o mesmo padrão existia
+// aqui no sync automático do OPP (receitas, despesas, Valor_Total e
+// Valor_Liquidado de OC/OS), rodando sozinho a cada 2h sem ninguém notar.
+const formatarBR = (v) => (Number(v) || 0).toFixed(2).replace('.', ',');
+
 /**
  * Sincroniza receitas e despesas do OPP com o banco local (Google Sheets).
  * Puxa os últimos 12 meses e salva na aba Financeiro_OPP.
@@ -311,7 +324,8 @@ async function syncReceitasDespesas(db) {
         Profissional: r.centro_custos_rec || r.profissional || r.profissional_rec || r.nome_profissional || r.centro_custo || '',
         Categoria: r.categoria || r.nome_categoria || r.categoria_rec || '1.0 Receitas',
         Descricao: r.nome_conta || r.observacoes_rec || '',
-        Valor: String(r.valor_rec || 0),
+        // formatarBR, não String() — ver comentário na definição de formatarBR acima
+        Valor: formatarBR(r.valor_rec || 0),
         Data_Vencimento: r.vencimento_rec || '',
         Data_Competencia: r.data_emissao || '',
         Situacao: r.liquidado_rec === 'Sim' ? 'Liquidado' : (r.situacao || 'Aberto'),
@@ -347,7 +361,8 @@ async function syncReceitasDespesas(db) {
         Profissional: d.profissional || d.profissional_pag || d.nome_profissional || d.centro_custo || '',
         Categoria: catClassificada,
         Descricao: d.nome_conta || d.observacoes_pag || '',
-        Valor: String(parseFloat(d.valor_pag || 0) || parseFloat(d.valor_pago || 0) || 0),
+        // formatarBR, não String() — ver comentário na definição de formatarBR acima
+        Valor: formatarBR(parseFloat(d.valor_pag || 0) || parseFloat(d.valor_pago || 0) || 0),
         Data_Vencimento: d.vencimento_pag || '',
         Data_Competencia: d.data_emissao || '',
         Situacao: d.liquidado_pag === 'Sim' ? 'Liquidado' : (d.situacao || 'Aberto'),
@@ -491,11 +506,12 @@ async function syncOrdensCompra(db) {
         ID_OC: String(o.id_pedido),
         ID_Ordem_OPP: String(o.id_ordem || ''),
         Nome_Fornecedor: o.nome_cliente || '',
-        Valor_Total: String(o.valor_total_nota || 0),
+        // formatarBR, não String() — ver comentário na definição de formatarBR acima
+        Valor_Total: formatarBR(o.valor_total_nota || 0),
         // Valor_Liquidado: melhor esforço, casado por fornecedor+valor (ver
         // comentário em casarValorPagoPorFornecedorValor). Fica vazio quando
         // não achou um match único — "desconhecido", não "não pago".
-        Valor_Liquidado: contaPaga ? String(contaPaga.valor_pag || 0) : '',
+        Valor_Liquidado: contaPaga ? formatarBR(contaPaga.valor_pag || 0) : '',
         Data_Pedido: o.data_pedido || '',
         Situacao: o.situacao_pedido || o.status_pedido || '',
         Observacao: o.obs_pedido || '',
@@ -546,7 +562,8 @@ async function syncOrdensServico(db) {
       Referencia: o.referencia_ordem || '',
       Problema: o.problema_ordem || '',
       Observacao: o.obs_pedido || '',
-      Valor_Total: String(o.valor_total_os || 0),
+      // formatarBR, não String() — ver comentário na definição de formatarBR acima
+      Valor_Total: formatarBR(o.valor_total_os || 0),
       Status: o.status_pedido || '',
       Data_Pedido: o.data_pedido || '',
       Data_Entrega: o.data_entrega || '',

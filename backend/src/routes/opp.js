@@ -836,7 +836,10 @@ router.get('/extrato-por-projeto', async (req, res, next) => {
     const porOC = {};
     for (const oc of ordensCompra) {
       const id = String(oc.ID_OC || '').trim();
-      if (id) porOC[id] = { total: parseFloat(oc.Valor_Total || 0) || 0 };
+      // pBR (já em escopo nesta rota, linha ~699), não parseFloat cru —
+      // Valor_Total da OrdensCompra_OPP tem registro antigo em formato EN
+      // e novo em formato BR desde a correção de 21/10/2026 no sync.
+      if (id) porOC[id] = { total: pBR(oc.Valor_Total || 0) || 0 };
     }
 
     const CUSTO_HORA = 36.40;
@@ -881,7 +884,7 @@ router.get('/extrato-por-projeto', async (req, res, next) => {
         const tercsProj = terceirizados.filter(t => t.ID_Projeto === p.ID_Projeto && t.Status !== 'Cancelado');
         const valorPorTerc = tercsProj.map(t => {
           const oc = t.OC ? porOC[String(t.OC).trim()] : null;
-          const valor = oc?.total || parseFloat(t.Valor_Contratado || t.Valor_Total || 0);
+          const valor = oc?.total || pBR(t.Valor_Contratado || t.Valor_Total || 0);
           return { t, valor };
         });
         const totalOC_contratado = valorPorTerc.reduce((s, x) => s + x.valor, 0);

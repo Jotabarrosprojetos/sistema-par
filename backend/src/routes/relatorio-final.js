@@ -66,7 +66,7 @@ router.get('/:idProjeto', async (req, res, next) => {
       .filter(m => ['Faturado', 'Recebido'].includes(m.Status_Financeiro))
       .reduce((s, m) => s + pBR(m.Valor || 0), 0);
 
-    const custoTerceirosReal = terceirizados.reduce((s, t) => s + parseFloat(t.Valor_Pago || t.Valor_Contratado || 0), 0);
+    const custoTerceirosReal = terceirizados.reduce((s, t) => s + pBR(t.Valor_Pago || t.Valor_Contratado || 0), 0);
     const horasRastreadas = logHoras.reduce((s, l) => s + parseFloat(l.Horas_Logadas || 0), 0);
     const custoEquipeReal = horasRastreadas * 36.40;
     const custoTotalReal = custoEquipeReal + custoTerceirosReal;
@@ -103,8 +103,8 @@ router.get('/:idProjeto', async (req, res, next) => {
     const terceirizadosBreakdown = terceirizados.map(t => ({
       fornecedor: t.Fornecedor || t.Nome_Fornecedor || '—',
       descricao: t.Descricao || t.Servico || '—',
-      valorContratado: parseFloat(t.Valor_Contratado || 0),
-      valorPago: parseFloat(t.Valor_Pago || 0),
+      valorContratado: pBR(t.Valor_Contratado || 0),
+      valorPago: pBR(t.Valor_Pago || 0),
       status: t.Status,
       vinculo: t.Vinculo_Contrato || t.vinculo || '—',
     }));
@@ -200,7 +200,7 @@ router.get('/:idProjeto', async (req, res, next) => {
       // Terceirizados
       terceirizados: {
         total: terceirizados.length,
-        custoContratado: terceirizados.reduce((s, t) => s + parseFloat(t.Valor_Contratado || 0), 0),
+        custoContratado: terceirizados.reduce((s, t) => s + pBR(t.Valor_Contratado || 0), 0),
         custoPago: custoTerceirosReal,
         percContrato: V > 0 ? (custoTerceirosReal / V) * 100 : 0,
         lista: terceirizadosBreakdown,

@@ -13,6 +13,20 @@ const DIAS_SEM_ATUALIZACAO = parseInt(process.env.ALERTA_DIAS_SEM_ATUALIZACAO ||
 const DIAS_A_PLANEJAR      = parseInt(process.env.ALERTA_DIAS_A_PLANEJAR      || '7');
 
 
+// Parser dual-formato pra campos monetários de texto (Valor_Global,
+// Valor_Contratado): lê tanto BR ("367.211,45") quanto EN ("367211.45" —
+// o que sai de String(numero) quando tem casas decimais). parseFloat() cru
+// só lê EN certo; sem isso, projetos com valor em formato BR legítimo
+// ficavam com percAlertaTerceiros/isProjetoReal errados. Mesmo parser já
+// usado em oppService.js/planejamento.js/relatorios.js.
+function pBR(v) {
+  const s = String(v || 0).trim();
+  if (s.includes(',')) return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
+  const partes = s.split('.');
+  if (partes.length === 2 && partes[1].length <= 2) return parseFloat(s) || 0;
+  return parseFloat(s.replace(/\./g, '')) || 0;
+}
+
 function diasUteisDesde(date) {
   const now = new Date();
   const start = new Date(date);
@@ -70,7 +84,7 @@ async function checkAllAlerts() {
 
     // Projeto real = tem contrato ou valor global > 0 (exclui iterações de sprint do ClickUp)
     const isProjetoReal = (p) =>
-      parseFloat(p.Valor_Global || 0) > 0 || (p.Nr_Contrato && String(p.Nr_Contrato).trim() !== '');
+      pBR(p.Valor_Global || 0) > 0 || (p.Nr_Contrato && String(p.Nr_Contrato).trim() !== '');
 
     // Índices em memória
     const projectMap = {};
@@ -129,9 +143,9 @@ async function checkAllAlerts() {
     // ─────────────────────────────────────────
     const percMap = {};
     for (const p of projects) {
-      const vg = parseFloat(p.Valor_Global || 0);
+      const vg = pBR(p.Valor_Global || 0);
       if (vg === 0) { percMap[p.ID_Projeto] = 0; continue; }
-      const total = (tercByProject[p.ID_Projeto] || []).reduce((s, t) => s + parseFloat(t.Valor_Contratado || 0), 0);
+      const total = (tercByProject[p.ID_Projeto] || []).reduce((s, t) => s + pBR(t.Valor_Contratado || 0), 0);
       percMap[p.ID_Projeto] = (total / vg) * 100;
     }
 

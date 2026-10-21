@@ -90,18 +90,29 @@ router.use(authMiddleware);
 const audit = auditMiddleware('Planejamentos');
 
 // Calcula os totais financeiros de um planejamento
-// ATENÇÃO: isto NÃO aceita os dois formatos — qualquer ponto é tratado como
-// separador de milhar e é descartado. Um valor em formato EN (ex.: "367211.45",
-// como sai de String(numero) em JS) vira "36721145" e perde a casa decimal,
-// inflando o valor em 100x. Só alimentar isto com texto já em formato BR
-// (ex.: "367.211,45") ou sem nenhum ponto. Ver formatarBR() abaixo para o
-// caminho inverso.
-const parseBR = (v) => parseFloat(String(v || 0).replace(/\./g, '').replace(',', '.')) || 0;
+// Lê valor monetário/texto em QUALQUER um dos dois formatos: BR com milhar
+// ("367.211,45"), BR sem milhar ("367211,45") ou EN/decimal US ("367211.45",
+// que é o que sai de String(numero) em JS quando o número tem casas
+// decimais). Antes isto só aceitava formato BR e qualquer valor em EN virava
+// "36721145" (perdia a casa decimal, inflando em 100x) — bug real confirmado
+// em 21/10/2026 (projeto Hospital Menandro de Faria, R$6.374.331,00 exibido
+// no lugar de R$63.743,31). Corrigido pra sempre detectar o formato certo,
+// independente de quem gravou o valor. Ver formatarBR() abaixo para o
+// caminho inverso (sempre grava em BR, nunca deixa a corrupção acontecer de
+// novo na escrita).
+const parseBR = (v) => {
+  const s = String(v || 0).trim();
+  if (s.includes(',')) return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
+  const partes = s.split('.');
+  if (partes.length === 2 && partes[1].length <= 2) return parseFloat(s) || 0;
+  return parseFloat(s.replace(/\./g, '')) || 0;
+};
 
-// Converte um número de volta pro formato de texto que parseBR() espera (e que
-// o frontend inteiro assume ao ler campos como Valor_Contrato). Serializar um
-// número recalculado com String(numero) em vez disto é o que causa o bug dos
-// valores inflados em 100x nas listagens (ex.: Aprovações e Baseline).
+// Converte um número de volta pro formato de texto BR que o sistema usa pra
+// gravar Valor_Contrato/Valor_Global. Serializar um número recalculado com
+// String(numero) em vez disto é o que causava o bug dos valores inflados em
+// 100x — qualquer gravação de valor monetário TEM que passar por aqui, nunca
+// por String() direto.
 const formatarBR = (v) => (Number(v) || 0).toFixed(2).replace('.', ',');
 
 // Categorias de contas a pagar da OPP que representam serviço de
@@ -211,7 +222,14 @@ router.post('/migrar-baselines', async (req, res, next) => {
     if (!['Admin', 'Diretoria'].includes(req.user?.perfil)) {
       return res.status(403).json({ error: 'Sem permissão.' });
     }
-    const parseBRLocal = (v) => parseFloat(String(v || 0).replace(/\./g, '').replace(',', '.')) || 0;
+    // Mesmo parser dual-formato do parseBR() acima — lê BR e EN corretamente.
+    const parseBRLocal = (v) => {
+      const s = String(v || 0).trim();
+      if (s.includes(',')) return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
+      const partes = s.split('.');
+      if (partes.length === 2 && partes[1].length <= 2) return parseFloat(s) || 0;
+      return parseFloat(s.replace(/\./g, '')) || 0;
+    };
     const aprovados = await db.findRows('Planejamentos', (p) => p.Status === 'Aprovado');
     let travados = 0, jaExistia = 0, erros = 0;
     for (const plan of aprovados) {
@@ -399,7 +417,13 @@ router.post('/', audit, async (req, res, next) => {
       Tipologia: dados.tipologia || '',
       Empresa: dados.empresa || '',
       Link_ClickUp: dados.linkClickUp || '',
-      Valor_Contrato: String(dados.valorContrato || 0),
+      // formatarBR(parseBR(...)), não String() — ver comentário na definição
+      // de parseBR/formatarBR acima. String(numero) grava em formato EN
+      // quando o valor tem centavos, e isso é a causa raiz do bug de
+      // valores inflados em 100x (confirmado 21/10/2026). parseBR() antes
+      // de formatarBR() normaliza tanto um número vindo direto do frontend
+      // quanto um texto herdado (BR ou EN) que caia aqui por engano.
+      Valor_Contrato: formatarBR(parseBR(dados.valorContrato || 0)),
       Impostos_Perc: String(dados.impostosPerc || 16.33),
       Taxa_Adm_Perc: String(dados.taxaAdmPerc || 12),
       Comissao_Perc: String(dados.comissaoPerc || 7.50),
@@ -435,7 +459,8 @@ router.post('/', audit, async (req, res, next) => {
         await db.updateRowById('Projetos_Contratos', 'ID_Projeto', dados.idProjeto, {
           ...project,
           Status: project.Status, // mantém status do ClickUp, não sobrescreve
-          Valor_Global: String(dados.valorContrato || project.Valor_Global),
+          // Mesma correção do Valor_Contrato acima: nunca String() direto.
+          Valor_Global: formatarBR(parseBR(dados.valorContrato || project.Valor_Global || 0)),
           Atualizado_Em: new Date().toISOString(),
         });
       }
@@ -628,7 +653,14 @@ async function handleAprovar(req, res, next, acaoForced) {
         let dados = {};
         try { dados = JSON.parse(plan.Dados_JSON || '{}'); } catch {}
         if (!dados._baseline?.travado) {
-          const parseBRLocal = (v) => parseFloat(String(v || 0).replace(/\./g, '').replace(',', '.')) || 0;
+          // Mesmo parser dual-formato do parseBR() acima — lê BR e EN corretamente.
+    const parseBRLocal = (v) => {
+      const s = String(v || 0).trim();
+      if (s.includes(',')) return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
+      const partes = s.split('.');
+      if (partes.length === 2 && partes[1].length <= 2) return parseFloat(s) || 0;
+      return parseFloat(s.replace(/\./g, '')) || 0;
+    };
           const equipe = dados.equipe || [];
           const medicoes = dados.medicoes || [];
           const versaoAnterior = dados._baseline?.versao || 0;
@@ -1572,7 +1604,14 @@ router.post('/migrar-baselines-dup', async (req, res, next) => {
     if (!['Admin', 'Diretoria'].includes(req.user?.perfil)) {
       return res.status(403).json({ error: 'Sem permissão.' });
     }
-    const parseBRLocal = (v) => parseFloat(String(v || 0).replace(/\./g, '').replace(',', '.')) || 0;
+    // Mesmo parser dual-formato do parseBR() acima — lê BR e EN corretamente.
+    const parseBRLocal = (v) => {
+      const s = String(v || 0).trim();
+      if (s.includes(',')) return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
+      const partes = s.split('.');
+      if (partes.length === 2 && partes[1].length <= 2) return parseFloat(s) || 0;
+      return parseFloat(s.replace(/\./g, '')) || 0;
+    };
     const aprovados = await db.findRows('Planejamentos', (p) => p.Status === 'Aprovado');
     let travados = 0, jaExistia = 0, erros = 0;
     for (const plan of aprovados) {
