@@ -34,7 +34,15 @@ function ehProblema(cat) {
 }
 
 async function contarCampo(client, tabela, campoValor, campoId, campoNome) {
-  const res = await client.query(`SELECT "${campoId}" as id, "${campoNome}" as nome, "${campoValor}" as valor FROM "${tabela}"`);
+  // Nunca deixa uma coluna que não existe (código e banco divergiram)
+  // derrubar o levantamento inteiro — reporta o erro nesse campo e segue
+  // pros outros.
+  let res;
+  try {
+    res = await client.query(`SELECT "${campoId}" as id, "${campoNome}" as nome, "${campoValor}" as valor FROM "${tabela}"`);
+  } catch (err) {
+    return { total: 0, contagem: {}, quebrados: [], erro: err.message };
+  }
   const contagem = {};
   const quebrados = [];
   for (const row of res.rows) {
@@ -94,6 +102,14 @@ async function contarMedicoesTabela(client) {
       Financeiro_OPP_Valor: await contarCampo(client, 'Financeiro_OPP', 'Valor', 'ID_OPP', 'Descricao'),
       OrdensCompra_OPP_Valor_Total: await contarCampo(client, 'OrdensCompra_OPP', 'Valor_Total', 'ID_OC', 'Nome_Fornecedor'),
       OrdensCompra_OPP_Valor_Liquidado: await contarCampo(client, 'OrdensCompra_OPP', 'Valor_Liquidado', 'ID_OC', 'Nome_Fornecedor'),
+      // Novo nesta versão — campo de Terceirizados, gravado até hoje (21/10)
+      // com String() cru em vez de formatarBR() (corrigido agora no routes/
+      // terceirizados.js). Isso só diz se JÁ EXISTE dado gravado errado —
+      // a leitura já foi corrigida pra ler os dois formatos independente
+      // do resultado aqui. "Valor_Estimado" foi removido do levantamento:
+      // a coluna não existe na tabela real (ver erro reportado antes) —
+      // ver colunas-reais.js pra conferir o schema de verdade.
+      Terceirizados_Valor_Contratado: await contarCampo(client, 'Terceirizados', 'Valor_Contratado', 'ID', 'Fornecedor'),
     };
 
     fs.writeFileSync('levantamento-resultado-completo.json', JSON.stringify(resultado, null, 2));

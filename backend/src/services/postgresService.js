@@ -64,7 +64,10 @@ async function ensureSheetsExist() {
       "Valor_Contratado" TEXT, "Valor_Pago" TEXT, "Status" TEXT, "ID_Tarefa_ClickUp" TEXT,
       "ID_Medicao_Vinculada" TEXT, "Percentual_do_Total" TEXT, "Data_Entrega_Prevista" TEXT,
       "Data_Entrega_Real" TEXT, "Observacao" TEXT, "Aprovado_Por" TEXT, "Criado_Em" TEXT,
-      "OC" TEXT, "Status_ClickUp" TEXT, "Etapa_ClickUp" TEXT, "Responsavel" TEXT
+      "OC" TEXT, "Status_ClickUp" TEXT, "Etapa_ClickUp" TEXT, "Responsavel" TEXT,
+      "Descricao_Servico" TEXT, "CNPJ_CPF" TEXT, "Nr_Contrato" TEXT, "Valor_Estimado" TEXT,
+      "Data_Vencimento" TEXT, "Nr_NF" TEXT, "Data_Pagamento" TEXT, "Link_Contrato" TEXT,
+      "Setor" TEXT
     )`,
     `CREATE TABLE IF NOT EXISTS "Equipe_Planejamento" (
       "ID" TEXT PRIMARY KEY, "ID_Planejamento" TEXT, "Colaborador" TEXT,
@@ -147,6 +150,27 @@ async function ensureSheetsExist() {
     // reaproveitada sempre depois, em vez de criar uma tarefa nova toda hora.
     // Substitui a tentativa de achar/depender de uma tarefa de Medição.
     `ALTER TABLE "Projetos_Contratos" ADD COLUMN IF NOT EXISTS "ID_Tarefa_Notificacoes_PAR" TEXT`,
+    // Mesmo problema do Valor_Liquidado acima, só que em Terceirizados: o
+    // código (POST /api/terceirizados e o PUT) grava Descricao_Servico,
+    // CNPJ_CPF, Nr_Contrato, Valor_Estimado, Data_Vencimento, Nr_NF,
+    // Data_Pagamento, Link_Contrato e Setor há tempo, mas a tabela real em
+    // produção nunca ganhou essas colunas (confirmado em 21/10/2026 via
+    // information_schema — nenhuma delas existia). Resultado: toda criação
+    // manual de terceirizado pela tela do PAR vinha derrubando o INSERT
+    // inteiro com "column ... does not exist" (Postgres rejeita o INSERT
+    // completo se qualquer uma das colunas não existir). As leituras (GET)
+    // já esperavam esses campos (ex.: Setor, Link_Contrato, Nr_Contrato na
+    // resposta), então a correção é adicionar as colunas que faltam, não
+    // remover os campos do código.
+    `ALTER TABLE "Terceirizados" ADD COLUMN IF NOT EXISTS "Descricao_Servico" TEXT`,
+    `ALTER TABLE "Terceirizados" ADD COLUMN IF NOT EXISTS "CNPJ_CPF" TEXT`,
+    `ALTER TABLE "Terceirizados" ADD COLUMN IF NOT EXISTS "Nr_Contrato" TEXT`,
+    `ALTER TABLE "Terceirizados" ADD COLUMN IF NOT EXISTS "Valor_Estimado" TEXT`,
+    `ALTER TABLE "Terceirizados" ADD COLUMN IF NOT EXISTS "Data_Vencimento" TEXT`,
+    `ALTER TABLE "Terceirizados" ADD COLUMN IF NOT EXISTS "Nr_NF" TEXT`,
+    `ALTER TABLE "Terceirizados" ADD COLUMN IF NOT EXISTS "Data_Pagamento" TEXT`,
+    `ALTER TABLE "Terceirizados" ADD COLUMN IF NOT EXISTS "Link_Contrato" TEXT`,
+    `ALTER TABLE "Terceirizados" ADD COLUMN IF NOT EXISTS "Setor" TEXT`,
     `CREATE TABLE IF NOT EXISTS "Auditoria" (
       "ID_Auditoria" TEXT PRIMARY KEY,
       "Tabela" TEXT NOT NULL,

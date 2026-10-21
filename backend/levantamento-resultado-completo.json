@@ -22929,5 +22929,12 @@
         "categoria": "EN"
       }
     ]
+  },
+  "Terceirizados_Valor_Contratado": {
+    "total": 103,
+    "contagem": {
+      "VAZIO": 103
+    },
+    "quebrados": []
   }
 }
