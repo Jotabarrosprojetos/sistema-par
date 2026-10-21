@@ -278,6 +278,19 @@ async function listarComPaginacao(endpoint, filtros = {}) {
   return todos;
 }
 
+// Converte um número (vindo da API do OPP, em JSON — formato EN mesmo
+// quando tem centavos) pro formato de texto que o resto do sistema espera
+// ao ler esses campos com parseBR (BR: vírgula decimal). Gravar um valor
+// com centavos usando String(numero) puro grava em formato EN (ex.:
+// "47370.88"), e isso é lido errado por qualquer tela que use parseBR nesse
+// campo depois — o ponto decimal é removido como se fosse separador de
+// milhar, inflando o valor em 100x. Foi exatamente esse bug, só que na
+// listagem de planejamentos, que causou os valores 100x inflados em
+// Aprovações/Baseline (corrigido em 21/10/2026) — e o mesmo padrão existia
+// aqui no sync automático do OPP (receitas, despesas, Valor_Total e
+// Valor_Liquidado de OC/OS), rodando sozinho a cada 2h sem ninguém notar.
+const formatarBR = (v) => (Number(v) || 0).toFixed(2).replace('.', ',');
+
 /**
  * Sincroniza receitas e despesas do OPP com o banco local (Google Sheets).
  * Puxa os últimos 12 meses e salva na aba Financeiro_OPP.
@@ -311,7 +324,8 @@ async function syncReceitasDespesas(db) {
         Profissional: r.centro_custos_rec || r.profissional || r.profissional_rec || r.nome_profissional || r.centro_custo || '',
         Categoria: r.categoria || r.nome_categoria || r.categoria_rec || '1.0 Receitas',
         Descricao: r.nome_conta || r.observacoes_rec || '',
-        Valor: String(r.valor_rec || 0),
+        // formatarBR, não String() — ver comentário na definição de formatarBR acima
+        Valor: formatarBR(r.valor_rec || 0),
         Data_Vencimento: r.vencimento_rec || '',
         Data_Competencia: r.data_emissao || '',
         Situacao: r.liquidado_rec === 'Sim' ? 'Liquidado' : (r.situacao || 'Aberto'),
@@ -347,7 +361,8 @@ async function syncReceitasDespesas(db) {
         Profissional: d.profissional || d.profissional_pag || d.nome_profissional || d.centro_custo || '',
         Categoria: catClassificada,
         Descricao: d.nome_conta || d.observacoes_pag || '',
-        Valor: String(parseFloat(d.valor_pag || 0) || parseFloat(d.valor_pago || 0) || 0),
+        // formatarBR, não String() — ver comentário na definição de formatarBR acima
+        Valor: formatarBR(parseFloat(d.valor_pag || 0) || parseFloat(d.valor_pago || 0) || 0),
         Data_Vencimento: d.vencimento_pag || '',
         Data_Competencia: d.data_emissao || '',
         Situacao: d.liquidado_pag === 'Sim' ? 'Liquidado' : (d.situacao || 'Aberto'),
@@ -448,17 +463,52 @@ async function testarConexao() {
   }
 }
 
-// Tenta achar, pra uma Ordem de Compra (fornecedor + valor), uma conta a
-// pagar única que bata os dois — já que o OPP não tem nenhum campo que ligue
-// uma conta a pagar de volta à O.C. (confirmado com dados reais: nem
-// id_pedido/id_ordem_compra, nem o filtro ?id_pedido=X, que a API ignora e
-// sempre devolve a mesma lista genérica). Testado com 8 O.C. reais: 4 bateram
-// único (fornecedor+valor exatos), 4 não bateram nada — provavelmente ainda
-// não pagas, pagas em parcelas, ou fornecedor com nome escrito diferente no
-// Contas a Pagar. Então isso é "melhor esforço": acerta boa parte, mas não
-// todas. Só usa o match quando sobra EXATAMENTE UMA conta — com mais de uma
-// batendo o mesmo fornecedor+valor, ou nenhuma, fica em branco (desconhecido)
-// em vez de arriscar mostrar o valor errado.
+// Extrai o número de OC citado no texto de uma conta a pagar (campo
+// observacoes_pag, com nome_conta como reserva) — confirmado com dados reais
+// (21/10/2026, universo completo: 1090 OCs x 1671 contas a pagar liquidadas)
+// que o próprio OPP escreve "Ordem nro. X" na observação quando gera a conta
+// a pagar a partir de uma Ordem de Compra. 70,2% das liquidadas têm esse
+// texto, e NAS 1173 vezes que bateu, bateu uma OC de verdade (100%) — não é
+// um palpite, é uma referência que o OPP já grava. Muito mais preciso que o
+// casamento por fornecedor+valor abaixo (que só acerta ~50%), então passa a
+// ser tentado primeiro.
+function extrairNumeroOCDoTexto(conta) {
+  const obs = conta.observacoes_pag || '';
+  const nome = conta.nome_conta || '';
+  const m = obs.match(/ordem(?:\s+de\s+compra)?\s+n(?:r?o\.?|[º°])\s*(\d+)/i)
+         || obs.match(/\boc\s*[:\-]?\s*(\d+)/i)
+         || obs.match(/\bpedido\s+n[º°]?\s*(\d+)/i)
+         || nome.match(/\boc\s*[:\-]?\s*(\d+)/i);
+  return m ? m[1] : null;
+}
+
+// Indexa as contas a pagar pelo número de OC extraído do texto (uma OC pode
+// ter várias parcelas/contas referenciando o mesmo número — ex.: "1ª/2ª
+// PARCELA REF OC X").
+function indexarContasPorNumeroOC(contasPagar) {
+  const indice = new Map();
+  for (const c of contasPagar) {
+    const num = extrairNumeroOCDoTexto(c);
+    if (!num) continue;
+    if (!indice.has(num)) indice.set(num, []);
+    indice.get(num).push(c);
+  }
+  return indice;
+}
+
+// Reserva pra quando a OC não tem nenhuma conta a pagar com o texto "Ordem
+// nro. X" (os ~30% restantes — normalmente despesas administrativas sem
+// vínculo a uma OC específica, tipo contabilidade/seguro). Tenta achar, pra
+// uma Ordem de Compra (fornecedor + valor), uma conta a pagar única que bata
+// os dois — já que o OPP não tem nenhum campo direto que ligue uma conta a
+// pagar de volta à O.C. (confirmado com dados reais: nem id_pedido/
+// id_ordem_compra, nem o filtro ?id_pedido=X, que a API ignora e sempre
+// devolve a mesma lista genérica, nem centro de custo — a OC não tem esse
+// campo). Testado com 8 O.C. reais: 4 bateram único (fornecedor+valor
+// exatos), 4 não bateram nada. Então isso é "melhor esforço": acerta boa
+// parte, mas não todas. Só usa o match quando sobra EXATAMENTE UMA conta —
+// com mais de uma batendo o mesmo fornecedor+valor, ou nenhuma, fica em
+// branco (desconhecido) em vez de arriscar mostrar o valor errado.
 function casarValorPagoPorFornecedorValor(oc, contasPagar) {
   const norm = (s) => (s || '').toString().toLowerCase().trim().normalize('NFD').replace(/[̀-ͯ]/g, '');
   const fornecedorOC = norm(oc.nome_cliente);
@@ -483,19 +533,41 @@ async function syncOrdensCompra(db) {
     listarComPaginacao('/ordens-compra'),
     listarComPaginacao('/contas-pagar').catch(() => []),
   ]);
+  const indiceTexto = indexarContasPorNumeroOC(contasPagar);
+  let viaTexto = 0, viaFornecedorValor = 0;
   const rows = todos
     .filter(o => o.id_pedido != null && String(o.id_pedido).trim() !== '')
     .map(o => {
-      const contaPaga = casarValorPagoPorFornecedorValor(o, contasPagar);
+      const contasDaOC = indiceTexto.get(String(o.id_pedido));
+      let valorLiquidado = '';
+      if (contasDaOC && contasDaOC.length > 0) {
+        // Achou pelo texto ("Ordem nro. X") — soma só as parcelas já
+        // liquidadas; valor_pago (realmente pago) tem prioridade sobre
+        // valor_pag (valor da parcela) quando vier preenchido.
+        const soma = contasDaOC
+          .filter((c) => c.liquidado_pag === 'Sim')
+          .reduce((acc, c) => acc + (parseFloat(c.valor_pago || 0) || parseFloat(c.valor_pag || 0) || 0), 0);
+        valorLiquidado = formatarBR(soma);
+        viaTexto++;
+      } else {
+        const contaPaga = casarValorPagoPorFornecedorValor(o, contasPagar);
+        if (contaPaga) {
+          valorLiquidado = formatarBR(contaPaga.valor_pag || 0);
+          viaFornecedorValor++;
+        }
+      }
       return {
         ID_OC: String(o.id_pedido),
         ID_Ordem_OPP: String(o.id_ordem || ''),
         Nome_Fornecedor: o.nome_cliente || '',
-        Valor_Total: String(o.valor_total_nota || 0),
-        // Valor_Liquidado: melhor esforço, casado por fornecedor+valor (ver
-        // comentário em casarValorPagoPorFornecedorValor). Fica vazio quando
-        // não achou um match único — "desconhecido", não "não pago".
-        Valor_Liquidado: contaPaga ? String(contaPaga.valor_pag || 0) : '',
+        // formatarBR, não String() — ver comentário na definição de formatarBR acima
+        Valor_Total: formatarBR(o.valor_total_nota || 0),
+        // Valor_Liquidado: primeiro tenta pelo texto "Ordem nro. X" na conta
+        // a pagar (ver extrairNumeroOCDoTexto — bate 100% quando acha), e só
+        // cai pro casamento por fornecedor+valor (~50%) quando não achou
+        // nenhuma conta com esse texto. Fica vazio só quando nenhum dos dois
+        // achou nada — "desconhecido", não "não pago".
+        Valor_Liquidado: valorLiquidado,
         Data_Pedido: o.data_pedido || '',
         Situacao: o.situacao_pedido || o.status_pedido || '',
         Observacao: o.obs_pedido || '',
@@ -506,7 +578,7 @@ async function syncOrdensCompra(db) {
   try { await db.clearSheetData('OrdensCompra_OPP'); } catch {}
   if (rows.length > 0) await db.insertManyRows('OrdensCompra_OPP', rows);
   const comValor = rows.filter(r => r.Valor_Liquidado).length;
-  console.log(`[OPP OC] ${rows.length} ordens de compra sincronizadas (${comValor} com Valor Liquidado casado por fornecedor+valor; o restante fica em branco por falta de vínculo confiável no OPP).`);
+  console.log(`[OPP OC] ${rows.length} ordens de compra sincronizadas (${comValor} com Valor Liquidado — ${viaTexto} casadas pelo texto "Ordem nro. X", ${viaFornecedorValor} pelo fornecedor+valor; o restante fica em branco por falta de vínculo confiável no OPP).`);
   return rows.length;
 }
 
@@ -546,7 +618,8 @@ async function syncOrdensServico(db) {
       Referencia: o.referencia_ordem || '',
       Problema: o.problema_ordem || '',
       Observacao: o.obs_pedido || '',
-      Valor_Total: String(o.valor_total_os || 0),
+      // formatarBR, não String() — ver comentário na definição de formatarBR acima
+      Valor_Total: formatarBR(o.valor_total_os || 0),
       Status: o.status_pedido || '',
       Data_Pedido: o.data_pedido || '',
       Data_Entrega: o.data_entrega || '',
