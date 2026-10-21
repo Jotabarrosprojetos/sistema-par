@@ -37,6 +37,50 @@ router.post('/webhook', async (req, res) => {
 // Rotas abaixo exigem auth
 router.use(authMiddleware);
 
+// POST /api/clickup/registrar-webhook — avisa o ClickUp pra começar a mandar
+// eventos (status, responsável, prazo, estimativa de tempo) pro endpoint
+// POST /api/clickup/webhook lá em cima. O endpoint de RECEBER já existe e
+// funciona; o que faltava era isso aqui — a função registerWebhook() do
+// clickupService nunca tinha sido chamada em lugar nenhum do sistema, então
+// o ClickUp nunca soube que devia mandar nada. É rodar uma vez só (o ClickUp
+// guarda a inscrição do lado dele); se rodar de novo cria OUTRA inscrição
+// (duplicada), não substitui a antiga — então só chamar de novo se de fato
+// precisar reconfigurar. Exige CLICKUP_WEBHOOK_BASE_URL (endereço público
+// atual do backend, ex.: https://sistema-par-production.up.railway.app) e,
+// se quiser validar a assinatura dos eventos recebidos, CLICKUP_WEBHOOK_SECRET
+// — ambos como variável de ambiente no Railway. Só Admin pode disparar.
+router.post('/registrar-webhook', async (req, res, next) => {
+  try {
+    if (req.user.perfil !== 'Admin') {
+      return res.status(403).json({ error: 'Somente Admin pode registrar o webhook do ClickUp.' });
+    }
+    const teamId = process.env.CLICKUP_TEAM_ID;
+    if (!teamId) return res.status(400).json({ error: 'CLICKUP_TEAM_ID não configurado.' });
+    if (!process.env.CLICKUP_WEBHOOK_BASE_URL) {
+      return res.status(400).json({ error: 'CLICKUP_WEBHOOK_BASE_URL não configurado — crie essa variável no Railway antes de registrar (endereço público do backend, ex.: https://sistema-par-production.up.railway.app).' });
+    }
+
+    const { registerWebhook } = require('../services/clickupService');
+    const resultado = await registerWebhook(teamId);
+
+    if (!resultado) {
+      // registerWebhook() só retorna undefined quando a própria chamada ao
+      // ClickUp falhou (token inválido, team errado etc.) — o detalhe já foi
+      // pro console.error lá dentro; aqui só avisamos que não deu certo.
+      return res.status(502).json({ error: 'Falha ao registrar o webhook no ClickUp. Veja os logs do servidor para o erro detalhado (token/permissão/team ID).' });
+    }
+
+    res.json({
+      ok: true,
+      message: 'Webhook registrado no ClickUp com sucesso.',
+      webhookId: resultado.id,
+      endpoint: `${process.env.CLICKUP_WEBHOOK_BASE_URL}/api/clickup/webhook`,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // GET /api/clickup/spaces — lista os spaces configurados
 router.get('/spaces', async (req, res, next) => {
   try {
