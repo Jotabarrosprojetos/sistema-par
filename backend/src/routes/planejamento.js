@@ -90,8 +90,19 @@ router.use(authMiddleware);
 const audit = auditMiddleware('Planejamentos');
 
 // Calcula os totais financeiros de um planejamento
-// Aceita vírgula ou ponto como separador decimal (formato BR ou EN)
+// ATENÇÃO: isto NÃO aceita os dois formatos — qualquer ponto é tratado como
+// separador de milhar e é descartado. Um valor em formato EN (ex.: "367211.45",
+// como sai de String(numero) em JS) vira "36721145" e perde a casa decimal,
+// inflando o valor em 100x. Só alimentar isto com texto já em formato BR
+// (ex.: "367.211,45") ou sem nenhum ponto. Ver formatarBR() abaixo para o
+// caminho inverso.
 const parseBR = (v) => parseFloat(String(v || 0).replace(/\./g, '').replace(',', '.')) || 0;
+
+// Converte um número de volta pro formato de texto que parseBR() espera (e que
+// o frontend inteiro assume ao ler campos como Valor_Contrato). Serializar um
+// número recalculado com String(numero) em vez disto é o que causa o bug dos
+// valores inflados em 100x nas listagens (ex.: Aprovações e Baseline).
+const formatarBR = (v) => (Number(v) || 0).toFixed(2).replace('.', ',');
 
 // Categorias de contas a pagar da OPP que representam serviço de
 // terceiro/subcontratado para um projeto — usado pra comparar "Terceirizados
@@ -276,7 +287,10 @@ router.get('/', async (req, res, next) => {
       const valorFinal = valorContrato > 0 ? valorContrato : valorGlobal > 0 ? valorGlobal : valorOC;
       return {
         ...p,
-        Valor_Contrato: String(valorFinal),
+        // formatarBR, não String() — ver comentário na definição de parseBR
+        // logo acima no arquivo. Esse era o bug dos valores 100x inflados em
+        // Aprovações/Baseline e no total da carteira do Dashboard.
+        Valor_Contrato: formatarBR(valorFinal),
       };
     });
     res.json(enriched);
