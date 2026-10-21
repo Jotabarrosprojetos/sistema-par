@@ -1,4 +1,4 @@
-const express = require('express');
+﻿const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const db = process.env.USE_POSTGRES === 'true' ? require('../services/postgresService') : require('../services/googleSheetsService');
 const { authMiddleware } = require('../middleware/auth');
@@ -80,6 +80,7 @@ router.post('/', audit, async (req, res, next) => {
     };
 
     await db.insertRow('Medicoes', medicao);
+    require('../services/medicoesService').invalidarCache();
     res.status(201).json(medicao);
   } catch (err) {
     next(err);
@@ -123,6 +124,7 @@ router.put('/:id', audit, async (req, res, next) => {
     }
 
     await db.updateRowById('Medicoes', 'ID_Medicao', req.params.id, updated);
+    require('../services/medicoesService').invalidarCache();
     res.json(updated);
   } catch (err) {
     next(err);

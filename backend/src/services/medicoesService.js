@@ -1,4 +1,4 @@
-// Motor de cálculo das Medições & Faturamento, reaproveitado por mais de uma
+﻿// Motor de cálculo das Medições & Faturamento, reaproveitado por mais de uma
 // tela (originalmente só vivia dentro da rota GET /api/medicoes, em
 // medicoes.js). Extraído pra cá pra poder ser usado também pelo
 // dashboard-financeiro.js, no cálculo do "Recebido" por projeto da tabela
@@ -17,7 +17,7 @@
 // casamento afeta as duas telas igual, o que é o comportamento certo (evita
 // as duas telas mostrarem números diferentes pro mesmo projeto).
 
-async function calcularMedicoesComOPP(db, filtros = {}) {
+async function calcularMedicoesComOPPSemCache(db, filtros = {}) {
   const { projeto, status } = filtros;
   let rows = await db.readSheet('Medicoes');
   if (projeto) rows = rows.filter((r) => r.ID_Projeto === projeto);
@@ -512,4 +512,36 @@ async function calcularMedicoesComOPP(db, filtros = {}) {
   return [...enriched, ...realRows, ...doPlanejamento];
 }
 
-module.exports = { calcularMedicoesComOPP };
+// Cache em memória, curto, do resultado completo (já filtrado por
+// projeto/status). Motivo: calcularMedicoesComOPPSemCache faz uma busca
+// PAGINADA e ao VIVO em /contas-receber do OPP (fetchReceitasOPP, acima) a
+// cada chamada — não lê de uma tabela local sincronizada, bate direto na
+// API externa. Confirmado com dados reais (21/10/2026) que o Dashboard do
+// Par chama isso duas vezes em paralelo a cada carregamento de página — uma
+// vez direto (rota /api/medicoes) e outra de dentro de
+// /api/dashboard-financeiro — ou seja, a mesma busca lenta na API do OPP
+// roda em dobro, toda vez que alguém abre o Dashboard. TTL de 60s: os dados
+// de contas a receber do OPP não mudam segundo a segundo, então cache curto
+// evita essa duplicação sem risco de mostrar algo visivelmente desatualizado.
+const CACHE_TTL_MS = 60 * 1000;
+const cacheResultado = new Map(); // chave (JSON dos filtros) -> { dados, expiraEm }
+
+async function calcularMedicoesComOPP(db, filtros = {}) {
+  const chave = JSON.stringify(filtros || {});
+  const agora = Date.now();
+  const cached = cacheResultado.get(chave);
+  if (cached && cached.expiraEm > agora) return cached.dados;
+  const dados = await calcularMedicoesComOPPSemCache(db, filtros);
+  cacheResultado.set(chave, { dados, expiraEm: agora + CACHE_TTL_MS });
+  return dados;
+}
+
+// Chamar depois de qualquer gravação em Medicoes (ou em qualquer tabela que
+// entra no cálculo acima — Planejamentos, Projetos_Contratos), senão o GET
+// /api/medicoes pode devolver o resultado de antes da gravação por até
+// CACHE_TTL_MS, mesmo já com o dado novo no banco.
+function invalidarCache() {
+  cacheResultado.clear();
+}
+
+module.exports = { calcularMedicoesComOPP, invalidarCache };

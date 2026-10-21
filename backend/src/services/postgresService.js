@@ -1,4 +1,4 @@
-const { Pool } = require('pg');
+﻿const { Pool } = require('pg');
 
 let pool = null;
 
@@ -8,7 +8,16 @@ function getPool() {
       connectionString: process.env.DATABASE_URL,
       ssl: process.env.DATABASE_URL?.includes('supabase') ? { rejectUnauthorized: false } : false,
       max: 10,
-      idleTimeoutMillis: 30000,
+      // Era 30000 (30s) — medido com dados reais (21/10/2026,
+      // diagnosticar-performance.js) que uma conexão NOVA com o pooler do
+      // Supabase custa ~1000-1200ms de handshake, contra ~100-180ms de uma
+      // conexão já aberta. Com 30s de idle timeout, o Dashboard (que dispara
+      // várias chamadas em paralelo, cada uma precisando de conexão) acaba
+      // pagando esse handshake de novo toda vez que o usuário passa mais de
+      // 30s sem acessar o PAR — ou seja, quase sempre. 5 minutos cobre o
+      // intervalo normal entre cliques/telas sem manter conexão parada pra
+      // sempre.
+      idleTimeoutMillis: 5 * 60 * 1000,
       connectionTimeoutMillis: 5000,
       keepAlive: true,
       keepAliveInitialDelayMillis: 10000,
@@ -214,9 +223,32 @@ function toDb(val) {
   return val;
 }
 
+// Cache em memória, por tabela, do resultado de readSheet (SELECT * sem
+// filtro). Medido com dados reais (21/10/2026, diagnosticar-performance.js):
+// ler as 7 tabelas principais em sequência custa ~800ms-2s, e o Dashboard
+// sozinho dispara 7 chamadas de API em paralelo que acabam relendo essas
+// MESMAS tabelas de novo cada uma — a causa real da demora relatada pelo
+// chef pra carregar/atualizar o PAR. Os dados locais só mudam via sync
+// agendado (ClickUp a cada 15min, OPP a cada 2h) ou por uma gravação direta
+// do próprio Par — então um TTL curto não arrisca mostrar dado visivelmente
+// desatualizado, e evita reler a tabela inteira várias vezes por segundo.
+// Toda função de escrita abaixo (insert/update/delete) invalida a tabela que
+// grava, pra nunca mostrar dado velho depois de uma edição do usuário.
+const CACHE_TTL_MS = 90 * 1000;
+const cacheLeitura = new Map(); // tableName -> { dados, expiraEm }
+
+function invalidarCache(tableName) {
+  cacheLeitura.delete(tableName);
+}
+
 async function readSheet(tableName) {
+  const agora = Date.now();
+  const cached = cacheLeitura.get(tableName);
+  if (cached && cached.expiraEm > agora) return cached.dados;
   const res = await getPool().query(`SELECT * FROM "${tableName}" ORDER BY ctid`);
-  return res.rows.map(rowToStrings);
+  const dados = res.rows.map(rowToStrings);
+  cacheLeitura.set(tableName, { dados, expiraEm: agora + CACHE_TTL_MS });
+  return dados;
 }
 
 async function findRows(tableName, condition) {
@@ -241,6 +273,7 @@ async function insertRow(tableName, data) {
     `INSERT INTO "${tableName}" (${cols}) VALUES (${placeholders}) ON CONFLICT DO NOTHING`,
     values
   );
+  invalidarCache(tableName);
   return data;
 }
 
@@ -267,6 +300,7 @@ async function insertManyRows(tableName, dataArray) {
       allValues
     );
   }
+  invalidarCache(tableName);
 }
 
 async function updateRowById(tableName, idField, idValue, newData) {
@@ -280,6 +314,7 @@ async function updateRowById(tableName, idField, idValue, newData) {
     `UPDATE "${tableName}" SET ${sets} WHERE "${idField}" = $${keys.length + 1}`,
     values
   );
+  invalidarCache(tableName);
   return newData;
 }
 
@@ -299,11 +334,13 @@ async function deleteRowById(tableName, idField, idValue) {
     `DELETE FROM "${tableName}" WHERE "${idField}" = $1`,
     [idValue]
   );
+  invalidarCache(tableName);
   return (res.rowCount || 0) > 0;
 }
 
 async function clearSheetData(tableName) {
   await getPool().query(`DELETE FROM "${tableName}"`);
+  invalidarCache(tableName);
 }
 
 module.exports = {
