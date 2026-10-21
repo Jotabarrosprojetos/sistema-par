@@ -472,10 +472,39 @@ export default function PlanejamentoFinanceiro() {
       )
       return
     }
-    // Valida soma das medições vs valor do contrato
-    if ((form.medicoes || []).length > 0) {
-      const vc = parseBR(form.valorContrato)
-      const somaMed = (form.medicoes || []).reduce((s, m) => {
+    // Resincroniza valor/percentual de cada medição com o Valor do Contrato
+    // ATUAL antes de validar e salvar. O campo "valor" de uma medição só é
+    // recalculado quando a própria linha é editada (ver salvarMedicao) — se o
+    // Valor do Contrato for ajustado DEPOIS de preencher as medições, os
+    // valores de cada marco ficam desatualizados (presos no contrato antigo)
+    // e passam a divergir da soma, mesmo com os percentuais somando 100%
+    // certinho. Isso fazia quem planeja "corrigir" ajustando o Valor do
+    // Contrato pra bater com a soma desatualizada, em vez do contrário.
+    // Percentual é a referência (é o que soma 100% na validação acima);
+    // valor é sempre recalculado a partir dele quando presente.
+    const vcAtual = parseBR(form.valorContrato)
+    const medicoesSincronizadas = (form.medicoes || []).map(m => {
+      if (vcAtual <= 0) return m
+      const hasPerc = m.percentual && parseBR(m.percentual) > 0
+      const hasVal = m.valor && parseBR(m.valor) > 0
+      if (hasPerc) {
+        return { ...m, valor: fmtN(parseBR(m.percentual) * vcAtual / 100, 2).replace('.', ',') }
+      }
+      if (hasVal) {
+        return { ...m, percentual: fmtN(parseBR(m.valor) / vcAtual * 100, 2).replace('.', ',') }
+      }
+      return m
+    })
+    if (medicoesSincronizadas.some((m, i) => m.valor !== form.medicoes[i]?.valor || m.percentual !== form.medicoes[i]?.percentual)) {
+      setForm(prev => ({ ...prev, medicoes: medicoesSincronizadas }))
+    }
+    // Valida soma das medições vs valor do contrato (agora com os valores já
+    // resincronizados — isso é mais uma rede de segurança do que uma
+    // divergência esperada, já que percentual e valor acabaram de ser
+    // recalculados um a partir do outro).
+    if (medicoesSincronizadas.length > 0) {
+      const vc = vcAtual
+      const somaMed = medicoesSincronizadas.reduce((s, m) => {
         const val = parseBR(m.valor)
         // se valor não definido, calcula pelo percentual
         return s + (val > 0 ? val : parseBR(m.percentual) * vc / 100)
@@ -499,6 +528,7 @@ export default function PlanejamentoFinanceiro() {
     try {
       const payload = {
         ...form,
+        medicoes: medicoesSincronizadas,
         ...extras,
         idProjeto: projetoId,
         status,

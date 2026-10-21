@@ -7,6 +7,18 @@ const { authMiddleware } = require('../middleware/auth');
 const router = express.Router();
 router.use(authMiddleware);
 
+// OrdensCompra_OPP.Valor_Total tem registro antigo em formato EN ("47370.88")
+// e novo em formato BR ("47.370,88") desde a correção de 21/10/2026 no sync
+// de oppService.js. parseFloat cru só lê o formato EN certo — esse parser lê
+// os dois, mesma lógica já usada em medicoesService.js pro mesmo tipo de campo.
+function pBROpp(v) {
+  const s = String(v || 0).trim();
+  if (s.includes(',')) return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
+  const partes = s.split('.');
+  if (partes.length === 2 && partes[1].length <= 2) return parseFloat(s) || 0;
+  return parseFloat(s.replace(/\./g, '')) || 0;
+}
+
 // Middleware de timeout para rotas pesadas
 function withTimeout(ms) {
   return (req, res, next) => {
@@ -295,7 +307,7 @@ router.get('/terceirizados', async (req, res, next) => {
       db.readSheet('OrdensCompra_OPP'),
     ]);
     const map = {};
-    for (const p of projects) { map[p.ID_Projeto] = { nome: p.Nome, valor: parseFloat(p.Valor_Global || 0) }; }
+    for (const p of projects) { map[p.ID_Projeto] = { nome: p.Nome, valor: pBR(p.Valor_Global || 0) }; }
 
     // Valor_Contratado não vem preenchido na tabela crua de Terceirizados — o
     // valor de verdade mora na Ordem de Compra vinculada (igual já é feito em
@@ -304,13 +316,13 @@ router.get('/terceirizados', async (req, res, next) => {
     const porOC = {};
     for (const oc of ocs) {
       const id = String(oc.ID_OC || '').trim();
-      if (id) porOC[id] = parseFloat(oc.Valor_Total || 0) || 0;
+      if (id) porOC[id] = pBROpp(oc.Valor_Total || 0);
     }
 
     const enriched = tercs.map((t) => {
       const proj = map[t.ID_Projeto] || {};
       const valorOC = t.OC ? porOC[String(t.OC).trim()] : undefined;
-      const valorContratado = valorOC !== undefined && valorOC > 0 ? valorOC : parseFloat(t.Valor_Contratado || 0);
+      const valorContratado = valorOC !== undefined && valorOC > 0 ? valorOC : pBR(t.Valor_Contratado || 0);
       return {
         ...t,
         Valor_Contratado: String(valorContratado),

@@ -9,6 +9,17 @@ const router = express.Router();
 router.use(authMiddleware);
 const audit = auditMiddleware('Medicoes');
 
+// Mesmo parser/formatador dual-formato usado em oppService.js/planejamento.js
+// pros outros campos monetários — grava sempre em BR, lê os dois formatos.
+const formatarBR = (v) => (Number(v) || 0).toFixed(2).replace('.', ',');
+function pBR(v) {
+  const s = String(v || 0).trim();
+  if (s.includes(',')) return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
+  const partes = s.split('.');
+  if (partes.length === 2 && partes[1].length <= 2) return parseFloat(s) || 0;
+  return parseFloat(s.replace(/\./g, '')) || 0;
+}
+
 // GET /api/medicoes/oc/:oc — busca medição pelo campo O.C. (chave OPP)
 router.get('/oc/:oc', async (req, res, next) => {
   try {
@@ -53,7 +64,7 @@ router.post('/', audit, async (req, res, next) => {
       ID_Projeto: idProjeto,
       Etapa: etapa,
       Percentual: String(percentual || 0),
-      Valor: String(valor || 0),
+      Valor: formatarBR(valor),
       Data_Previsao: dataPrevisao || '',
       Data_Realizacao: '',
       Status_Fisico: 'Pendente',
@@ -82,6 +93,11 @@ router.put('/:id', audit, async (req, res, next) => {
     if (!medicao) return res.status(404).json({ error: 'Medição não encontrada.' });
 
     const updated = { ...medicao, ...req.body, ID_Medicao: medicao.ID_Medicao };
+
+    // Normaliza valor monetário se vier na edição — mesma lógica do POST acima.
+    if (req.body.Valor !== undefined && req.body.Valor !== null && req.body.Valor !== '') {
+      updated.Valor = formatarBR(pBR(req.body.Valor));
+    }
 
     // Quando NF é emitida, registra data automática
     if (req.body.nrNF && !medicao.Nr_NF) {
@@ -128,7 +144,7 @@ router.get('/previsao/recebiveis', async (req, res, next) => {
     for (const m of pendentes) {
       const mes = m.Data_Previsao.slice(0, 7); // YYYY-MM
       if (!porMes[mes]) porMes[mes] = { mes, valor: 0, medicoes: [] };
-      porMes[mes].valor += parseFloat(m.Valor || 0);
+      porMes[mes].valor += pBR(m.Valor || 0);
       porMes[mes].medicoes.push({ ...m, nomeProjeto: projectMap[m.ID_Projeto] || '' });
     }
 

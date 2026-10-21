@@ -19,7 +19,7 @@ async function calcPercTerceiros(idProjeto, valorGlobal, excludeId = null) {
   const tercs = await db.findRows('Terceirizados', (t) =>
     t.ID_Projeto === idProjeto && t.Status !== 'Cancelado' && (excludeId ? t.ID !== excludeId : true)
   );
-  const total = tercs.reduce((s, t) => s + parseFloat(t.Valor_Contratado || 0), 0);
+  const total = tercs.reduce((s, t) => s + pBROpp(t.Valor_Contratado || 0), 0);
   const perc = valorGlobal > 0 ? (total / valorGlobal) * 100 : 0;
   return { total, perc, count: tercs.length };
 }
@@ -32,6 +32,27 @@ async function calcPercTerceiros(idProjeto, valorGlobal, excludeId = null) {
 // lançamento do OPP tem esse texto (confirmado: 0 de 2438 bateram) — os
 // lançamentos lá são coisas como "SERVIÇOS DE CONTABILIDADE", sem menção à OC.
 // Usar a tabela já sincronizada por ID é direto e confiável.
+// parseFloat() cru não serve aqui: Valor_Total/Valor_Liquidado da
+// OrdensCompra_OPP já foram gravados tanto em formato EN ("47370.88", bug já
+// corrigido em 21/10/2026 no sync do opp.js — ver formatarBR em oppService.js)
+// quanto, dali pra frente, em formato BR ("47.370,88"). Esse parser trata os
+// dois corretamente, não assume um formato fixo — mesma lógica já usada em
+// medicoesService.js pro mesmo tipo de campo vindo do OPP.
+function pBROpp(v) {
+  const s = String(v || 0).trim();
+  if (s.includes(',')) return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
+  const partes = s.split('.');
+  if (partes.length === 2 && partes[1].length <= 2) return parseFloat(s) || 0;
+  return parseFloat(s.replace(/\./g, '')) || 0;
+}
+
+// Converte um número pro formato de texto BR que o resto do sistema espera.
+// Valor_Contratado/Valor_Estimado de Terceirizados tinham o mesmo bug dos
+// campos do OPP: eram gravados com String(numero), que em formato EN some
+// com a casa decimal quando lido por um parser BR em outra tela — corrigido
+// em 21/10/2026 junto com o resto (ver oppService.js/planejamento.js).
+const formatarBR = (v) => (Number(v) || 0).toFixed(2).replace('.', ',');
+
 async function mapaOrdensCompra() {
   try {
     const ocs = await db.readSheet('OrdensCompra_OPP');
@@ -40,8 +61,8 @@ async function mapaOrdensCompra() {
       const id = String(oc.ID_OC || '').trim();
       if (!id) continue;
       porOC[id] = {
-        total: parseFloat(oc.Valor_Total || 0) || 0,
-        pago: parseFloat(oc.Valor_Liquidado || 0) || 0,
+        total: pBROpp(oc.Valor_Total || 0),
+        pago: pBROpp(oc.Valor_Liquidado || 0),
         situacao: oc.Situacao || '',
         fornecedor: oc.Nome_Fornecedor || '',
       };
@@ -67,7 +88,6 @@ router.get('/', async (req, res, next) => {
     if (status) rows = rows.filter((r) => r.Status === status);
 
     const projMap = Object.fromEntries(projetos.map(p => [p.ID_Projeto, p]));
-    const pBR = (v) => parseFloat(String(v || 0).replace(/\./g, '').replace(',', '.')) || 0;
 
     // Limpa valor de fornecedor que pode ter sido salvo como JSON do ClickUp
     function parseFornecedor(raw) {
@@ -111,13 +131,13 @@ router.get('/', async (req, res, next) => {
       // parte das O.C. (testado: 4 de 8), mas fica 0 quando não achou um
       // match seguro (não significa necessariamente que não foi pago).
       const valorPagoOPP       = oppEntry?.pago  || 0;
-      const valorContratadoPAR = pBR(r.Valor_Contratado || r.Valor_Estimado || 0);
+      const valorContratadoPAR = pBROpp(r.Valor_Contratado || r.Valor_Estimado || 0);
 
       const valorContratado = valorContratadoOPP || valorContratadoPAR;
       const valorLiquidado  = valorPagoOPP;
       const saldo = Math.max(0, valorContratado - valorLiquidado);
 
-      const valorGlobal = parseFloat(proj?.Valor_Global || 0);
+      const valorGlobal = pBROpp(proj?.Valor_Global || 0);
       const percCalc = valorGlobal > 0 && valorContratado > 0
         ? ((valorContratado / valorGlobal) * 100).toFixed(2)
         : (r.Percentual_Contrato || r.Percentual_do_Total || '0');
@@ -204,9 +224,9 @@ router.post('/', audit, async (req, res, next) => {
     const project = await db.findOne('Projetos_Contratos', (p) => p.ID_Projeto === idProjetoFinal);
     if (!project) return res.status(404).json({ error: 'Projeto não encontrado.' });
 
-    const valor = parseFloat(valorContratado || Valor_Contratado || 0);
-    const valorEst = parseFloat(valorEstimado || Valor_Estimado || valor || 0);
-    const valorGlobal = parseFloat(project.Valor_Global || 0);
+    const valor = pBROpp(valorContratado || Valor_Contratado || 0);
+    const valorEst = pBROpp(valorEstimado || Valor_Estimado || valor || 0);
+    const valorGlobal = pBROpp(project.Valor_Global || 0);
 
     // Verifica teto ANTES de inserir
     const { total, perc } = await calcPercTerceiros(idProjetoFinal, valorGlobal);
@@ -246,8 +266,8 @@ router.post('/', audit, async (req, res, next) => {
       Fornecedor: fornecedorFinal,
       CNPJ_CPF: cnpjCpf || CNPJ_CPF || '',
       Nr_Contrato: Nr_Contrato || '',
-      Valor_Estimado: String(valorEst),
-      Valor_Contratado: String(valor),
+      Valor_Estimado: formatarBR(valorEst),
+      Valor_Contratado: formatarBR(valor),
       Valor_Pago: '0',
       Status: Status || 'Backlog',
       ID_Tarefa_ClickUp: idTarefaClickUp || '',
@@ -296,6 +316,17 @@ router.put('/:id', audit, async (req, res, next) => {
     ];
 
     const updated = { ...row, ...req.body, ID: row.ID, ID_Projeto: row.ID_Projeto };
+
+    // Se a edição mandou um valor monetário novo, normaliza pro formato BR
+    // de texto antes de gravar — sem isso, um número vindo direto do
+    // formulário (ex.: 47370.88) seria gravado cru e lido errado depois por
+    // qualquer tela que assume formato BR (mesmo bug do Valor_Contrato/
+    // Valor_Estimado corrigido no POST acima).
+    for (const campo of ['Valor_Contratado', 'Valor_Estimado', 'Valor_Pago']) {
+      if (req.body[campo] !== undefined && req.body[campo] !== null && req.body[campo] !== '') {
+        updated[campo] = formatarBR(pBROpp(req.body[campo]));
+      }
+    }
 
     // Pagamento só após análise técnica aprovada
     if (updated.Status === 'Contas a Pagar' && row.Status !== 'Aguardando Aprovação Externa' && row.Status !== 'Análise Técnica') {
