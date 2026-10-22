@@ -30,3 +30,5 @@ Thumbs.db
 # Editor
 .vscode/settings.json
 *.swp
+backend/levantamento-resultado-completo.json
+*-resultado-completo.json
