@@ -1361,6 +1361,13 @@ async function getTimeEntriesByTask(taskId) {
 async function syncHorasPorTask(tasks, projeto) {
   let novos = 0, atualizados = 0;
   getTimeEntriesByTask._loggedOnce = false;
+  // Lê Log_Horas UMA vez antes do loop, em vez de um db.findOne (= leitura
+  // completa da tabela) por time entry — achado em 22/10/2026 investigando
+  // o estouro de cota de saída do Supabase: com a tabela girando ~3000
+  // linhas, cada sync de projeto rodava milhares de leituras completas só
+  // aqui.
+  const logHorasAtual = await db.readSheet('Log_Horas');
+  const porEntryId = new Map(logHorasAtual.map(r => [String(r.ID_TimeEntry_ClickUp), r]));
   for (const task of tasks) {
     try {
       const entries = await getTimeEntriesByTask(task.id);
@@ -1369,9 +1376,9 @@ async function syncHorasPorTask(tasks, projeto) {
         if (parseFloat(horas) === 0) continue;
         const entryId = String(entry.id);
         const colaborador = entry.user?.username || entry.user?.email || task.assignees?.[0]?.username || 'Não identificado';
-        const exists = await db.findOne('Log_Horas', r => String(r.ID_TimeEntry_ClickUp) === entryId);
+        const exists = porEntryId.get(entryId);
         if (!exists) {
-          await db.insertRow('Log_Horas', {
+          const novaLinha = {
             ID: entryId,
             ID_Projeto: projeto.ID_Projeto,
             Colaborador: colaborador,
@@ -1380,10 +1387,14 @@ async function syncHorasPorTask(tasks, projeto) {
             Custo_Calculado: '',
             Data: entry.start ? new Date(parseInt(entry.start)).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
             ID_TimeEntry_ClickUp: entryId,
-          });
+          };
+          await db.insertRow('Log_Horas', novaLinha);
+          porEntryId.set(entryId, novaLinha);
           novos++;
         } else if (parseFloat(exists.Horas_Logadas).toFixed(2) !== horas) {
-          await db.updateRowById('Log_Horas', 'ID_TimeEntry_ClickUp', entryId, { ...exists, Horas_Logadas: horas });
+          const atualizada = { ...exists, Horas_Logadas: horas };
+          await db.updateRowById('Log_Horas', 'ID_TimeEntry_ClickUp', entryId, atualizada);
+          porEntryId.set(entryId, atualizada);
           atualizados++;
         }
       }
@@ -1398,6 +1409,9 @@ async function syncHorasPorTask(tasks, projeto) {
 // Fallback: extrai horas do campo time_spent das tasks (captura lançamentos manuais)
 async function syncHorasDoTimespent(tasks, projeto) {
   let salvos = 0;
+  // Mesma correção do syncHorasPorTask acima: lê Log_Horas uma vez, não por task.
+  const logHorasAtual = await db.readSheet('Log_Horas');
+  const porEntryId = new Map(logHorasAtual.map(r => [String(r.ID_TimeEntry_ClickUp), r]));
   for (const task of tasks) {
     if (!task.time_spent || parseInt(task.time_spent) === 0) continue;
     const horas = (parseInt(task.time_spent) / 3600000).toFixed(2);
@@ -1405,9 +1419,9 @@ async function syncHorasDoTimespent(tasks, projeto) {
     const assignee = task.assignees?.[0]?.username || task.assignees?.[0]?.email || 'Não identificado';
 
     try {
-      const exists = await db.findOne('Log_Horas', r => r.ID_TimeEntry_ClickUp === entryId);
+      const exists = porEntryId.get(entryId);
       if (!exists) {
-        await db.insertRow('Log_Horas', {
+        const novaLinha = {
           ID: entryId,
           ID_Projeto: projeto.ID_Projeto,
           Colaborador: assignee,
@@ -1416,13 +1430,16 @@ async function syncHorasDoTimespent(tasks, projeto) {
           Custo_Calculado: '',
           Data: new Date().toISOString().split('T')[0],
           ID_TimeEntry_ClickUp: entryId,
-        });
+        };
+        await db.insertRow('Log_Horas', novaLinha);
+        porEntryId.set(entryId, novaLinha);
         console.log(`[ClickUp] time_spent NOVO "${task.name}": ${horas}h → projeto=${projeto.ID_Projeto}`);
         salvos++;
       } else {
-        console.log(`[ClickUp] time_spent JÁ EXISTE "${task.name}": exists.Horas_Logadas=${exists.Horas_Logadas} horas=${horas} ID_Projeto_salvo=${exists.ID_Projeto}`);
         if (parseFloat(exists.Horas_Logadas).toFixed(2) !== horas || exists.ID_Projeto !== projeto.ID_Projeto) {
-          await db.updateRowById('Log_Horas', 'ID_TimeEntry_ClickUp', entryId, { ...exists, Horas_Logadas: horas, ID_Projeto: projeto.ID_Projeto });
+          const atualizada = { ...exists, Horas_Logadas: horas, ID_Projeto: projeto.ID_Projeto };
+          await db.updateRowById('Log_Horas', 'ID_TimeEntry_ClickUp', entryId, atualizada);
+          porEntryId.set(entryId, atualizada);
           console.log(`[ClickUp] time_spent ATUALIZADO "${task.name}": ${horas}h`);
           salvos++;
         }
@@ -1452,6 +1469,14 @@ async function syncTimeEntries(timeEntries, projetos, extraListMap = {}) {
   console.log(`[ClickUp] projectById keys: ${Object.keys(projectById).join(', ')}`);
   console.log(`[ClickUp] extraListMap keys: ${Object.keys(extraListMap).slice(0,10).join(', ')}`);
 
+  // Lê Log_Horas UMA vez pra sincronização inteira, em vez de um db.findOne
+  // (= leitura completa da tabela) por time entry — era o maior responsável
+  // pelo estouro de cota de saída do Supabase (achado em 22/10/2026): essa
+  // função sozinha processa todas as time entries de 3 anos a cada ciclo de
+  // 15min, então virava milhares de leituras completas por ciclo.
+  const logHorasAtual = await db.readSheet('Log_Horas');
+  const porEntryId = new Map(logHorasAtual.map(r => [String(r.ID_TimeEntry_ClickUp), r]));
+
   for (const entry of timeEntries) {
     const listId    = entry.task_location?.list_id  || entry.task?.list?.id;
     const folderId  = entry.task_location?.folder_id || entry.task?.folder?.id;
@@ -1462,30 +1487,32 @@ async function syncTimeEntries(timeEntries, projetos, extraListMap = {}) {
     if (!idProjeto) continue;
 
     const horasLogadas = entry.duration ? (parseFloat(entry.duration) / 3600000).toFixed(2) : '0';
+    const entryIdStr = String(entry.id);
 
     try {
-      const exists = await db.findOne('Log_Horas', (r) => String(r.ID_TimeEntry_ClickUp) === String(entry.id));
-      
+      const exists = porEntryId.get(entryIdStr);
+
       if (!exists) {
-        await db.insertRow('Log_Horas', {
-          ID: String(entry.id),
+        const novaLinha = {
+          ID: entryIdStr,
           ID_Projeto: idProjeto,
           Colaborador: entry.user?.username || entry.user?.email || '',
           Horas_Estimadas: '',
           Horas_Logadas: horasLogadas,
           Custo_Calculado: '',
           Data: entry.start ? new Date(parseInt(entry.start)).toISOString().split('T')[0] : '',
-          ID_TimeEntry_ClickUp: String(entry.id),
-        });
+          ID_TimeEntry_ClickUp: entryIdStr,
+        };
+        await db.insertRow('Log_Horas', novaLinha);
+        porEntryId.set(entryIdStr, novaLinha);
         novos++;
       } else {
         // Normaliza para comparação (Sheets pode retornar string ou numero)
         const currentVal = parseFloat(exists.Horas_Logadas || 0).toFixed(2);
         if (currentVal !== horasLogadas) {
-          await db.updateRowById('Log_Horas', 'ID_TimeEntry_ClickUp', String(entry.id), {
-            ...exists,
-            Horas_Logadas: horasLogadas,
-          });
+          const atualizada = { ...exists, Horas_Logadas: horasLogadas };
+          await db.updateRowById('Log_Horas', 'ID_TimeEntry_ClickUp', entryIdStr, atualizada);
+          porEntryId.set(entryIdStr, atualizada);
           console.log(`[ClickUp] Time entry ${entry.id} atualizado: ${currentVal}h → ${horasLogadas}h`);
           atualizados++;
         }
