@@ -14,7 +14,18 @@ const pBR = (v) => {
   return parseFloat(s.replace(/\./g, '')) || 0
 }
 
+const OPP_CACHE_TTL_MS = 90 * 1000;
+let oppBatchCache = null; // { dados, expiraEm }
+
 async function fetchOppBatch() {
+  const agora = Date.now();
+  if (oppBatchCache && oppBatchCache.expiraEm > agora) return oppBatchCache.dados;
+  const dados = await fetchOppBatchSemCache();
+  oppBatchCache = { dados, expiraEm: agora + OPP_CACHE_TTL_MS };
+  return dados;
+}
+
+async function fetchOppBatchSemCache() {
   try {
     const { oppRequest } = require('../services/oppService')
     const todosCC = await oppRequest('GET', '/centros-custo?limit=500')

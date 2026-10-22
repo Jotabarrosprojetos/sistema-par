@@ -74,7 +74,7 @@ const GRUPOS_META = {
 router.get('/', async (req, res, next) => {
   try {
     const projetos = await db.readSheet('Projetos_Contratos');
-    const planos = await db.readSheet('Planejamento_Financeiro');
+    const planos = await db.readSheet('Planejamentos');
 
     const planoMap = {};
     for (const p of planos) {
@@ -82,15 +82,15 @@ router.get('/', async (req, res, next) => {
     }
 
     const lista = projetos
-      .filter(p => planoMap[p.ID_Projeto]?.nrContratoOS)
+      .filter(p => planoMap[p.ID_Projeto]?.Nr_Contrato_OS)
       .map(p => ({
         ID_Projeto: p.ID_Projeto,
         Nome: p.Nome,
         Setor: p.Setor,
         Status: p.Status,
         Cliente: p.Cliente || '',
-        centroCusto: planoMap[p.ID_Projeto]?.nrContratoOS || '',
-        planTravado: planoMap[p.ID_Projeto]?.Plan_Travado === 'true' || planoMap[p.ID_Projeto]?.Plan_Travado === true,
+        centroCusto: planoMap[p.ID_Projeto]?.Nr_Contrato_OS || '',
+        planTravado: planoMap[p.ID_Projeto]?.Travado === 'true' || planoMap[p.ID_Projeto]?.Travado === true,
       }));
 
     res.json({ projetos: lista });
@@ -108,10 +108,10 @@ router.get('/:idProjeto', async (req, res, next) => {
     if (!projeto) return res.status(404).json({ error: 'Projeto não encontrado' });
 
     // 2. Planejamento + baseline
-    const planos = await db.readSheet('Planejamento_Financeiro');
+    const planos = await db.readSheet('Planejamentos');
     const plano = planos.find(p => p.ID_Projeto === idProjeto);
     let baseline = null;
-    let centroCusto = plano?.nrContratoOS || '';
+    let centroCusto = plano?.Nr_Contrato_OS || '';
     if (plano?.Dados_JSON) {
       try {
         const dados = JSON.parse(plano.Dados_JSON);
@@ -196,7 +196,7 @@ router.get('/:idProjeto', async (req, res, next) => {
 
     res.json({
       projeto: { ...projeto, centroCusto },
-      plano: plano ? { nrContratoOS: plano.nrContratoOS, planTravado: plano.Plan_Travado, Valor_Contrato: plano.Valor_Contrato } : null,
+      plano: plano ? { nrContratoOS: plano.Nr_Contrato_OS, planTravado: plano.Travado, Valor_Contrato: plano.Valor_Contrato } : null,
       baseline,
       totalLancamentos: lancamentos.length,
       grupos,
