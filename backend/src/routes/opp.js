@@ -656,6 +656,116 @@ router.get('/extrato/:idProjeto', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// GET /api/opp/conferencia-comissoes — concilia comissões rateadas no OPP
+// (categoria contendo "comiss", desde `desde`) contra os projetos do Par:
+// soma quanto foi pago em comissão rateada no período e quanto disso o Par
+// conseguiu atribuir a algum projeto (mesma lógica de vínculo usada em
+// /extrato/:idProjeto — centro de custo travado > Centro_Custo_OPP > nome do
+// cliente), listando separadamente o que não bateu com nenhum projeto.
+// Pedido do Roberto (reabertura da tarefa de rateio em 22/10/2026): provar
+// que a comissão rateada aparece no saldo de cada projeto e que nada fica
+// de fora sem ser notado.
+router.get('/conferencia-comissoes', async (req, res, next) => {
+  try {
+    const db = process.env.USE_POSTGRES === 'true' ? require('../services/postgresService') : require('../services/googleSheetsService');
+    const agora = new Date();
+    const desde = req.query.desde || '2026-01-01';
+    const ate = req.query.ate || agora.toISOString().split('T')[0];
+
+    const [projetos, planejamentos, despesasOPP] = await Promise.all([
+      db.readSheet('Projetos_Contratos'),
+      db.readSheet('Planejamentos'),
+      opp.listarDespesas({ data_inicio: desde, data_fim: ate }),
+    ]);
+
+    const planPorProjeto = {};
+    for (const p of planejamentos) {
+      if (!planPorProjeto[p.ID_Projeto]) planPorProjeto[p.ID_Projeto] = p;
+    }
+
+    // Mesma prioridade de vínculo usada em GET /extrato/:idProjeto acima —
+    // mantida idêntica de propósito, pra bater com o que a tela de
+    // Acompanhamento já mostra por projeto (ver observação no comentário da
+    // tarefa sobre o campo Travado).
+    const candidatos = projetos.map(proj => {
+      const plan = planPorProjeto[proj.ID_Projeto];
+      const centroCustoTravado = (plan?.Travado && plan?.Nr_Contrato_OS)
+        ? plan.Nr_Contrato_OS.trim().toLowerCase() : '';
+      const centroCusto = (proj.Centro_Custo_OPP || '').trim().toLowerCase();
+      const clienteNome = (proj.Cliente || '').trim().toLowerCase();
+      return { id: proj.ID_Projeto, nome: proj.Nome, centroCustoTravado, centroCusto, clienteNome };
+    });
+
+    const matchProjeto = (textoRateio) => {
+      const t = (textoRateio || '').trim().toLowerCase();
+      if (!t) return null;
+      for (const c of candidatos) {
+        if (c.centroCustoTravado && t.includes(c.centroCustoTravado)) return c;
+      }
+      for (const c of candidatos) {
+        if (!c.centroCustoTravado && c.centroCusto && (t.includes(c.centroCusto) || (c.centroCusto.includes(t) && t.length > 4))) return c;
+      }
+      for (const c of candidatos) {
+        if (!c.centroCustoTravado && !c.centroCusto && c.clienteNome && t.includes(c.clienteNome) && c.clienteNome.length > 4) return c;
+      }
+      return null;
+    };
+
+    const listaD = (Array.isArray(despesasOPP) ? despesasOPP : (despesasOPP?.data || [])).filter(d => d.lixeira !== 'Sim');
+    const ehComissao = (d) => {
+      const texto = `${d.categoria_pag || ''} ${d.nome_conta || ''} ${d.observacoes_pag || ''}`.toLowerCase();
+      return texto.includes('comiss');
+    };
+    const linhasCentroCusto = (lancamento, textoHeaderFallback) => {
+      if (Array.isArray(lancamento.centro_custo) && lancamento.centro_custo.length > 0) {
+        return lancamento.centro_custo.map(l => ({ texto: l.desc_centro_custos || '', valor: parseFloat(l.valor || 0), rateado: true }));
+      }
+      return [{ texto: textoHeaderFallback || '', valor: parseFloat(lancamento.valor_pag || 0), rateado: false }];
+    };
+
+    const comissoes = listaD.filter(ehComissao);
+
+    let totalRateado = 0;
+    let totalAtribuido = 0;
+    const porProjeto = {}; // id -> { nome, total }
+    const naoAtribuido = [];
+
+    for (const d of comissoes) {
+      for (const linha of linhasCentroCusto(d, d.centro_custos_pag)) {
+        totalRateado += linha.valor;
+        const proj = matchProjeto(linha.texto);
+        if (proj) {
+          totalAtribuido += linha.valor;
+          if (!porProjeto[proj.id]) porProjeto[proj.id] = { id: proj.id, nome: proj.nome, total: 0 };
+          porProjeto[proj.id].total += linha.valor;
+        } else {
+          naoAtribuido.push({
+            idLancamento: d.id_conta_pag,
+            descricao: d.nome_conta || d.observacoes_pag,
+            centroCustoTexto: linha.texto,
+            valor: linha.valor,
+            vencimento: d.vencimento_pag,
+            fornecedor: d.nome_fornecedor,
+            rateado: linha.rateado,
+          });
+        }
+      }
+    }
+
+    res.json({
+      periodo: { desde, ate },
+      totalLancamentosComissao: comissoes.length,
+      totalLinhasRateio: comissoes.reduce((s, d) => s + linhasCentroCusto(d, d.centro_custos_pag).length, 0),
+      totalRateado: Math.round(totalRateado * 100) / 100,
+      totalAtribuido: Math.round(totalAtribuido * 100) / 100,
+      totalNaoAtribuido: Math.round((totalRateado - totalAtribuido) * 100) / 100,
+      percAtribuido: totalRateado > 0 ? Math.round((totalAtribuido / totalRateado) * 1000) / 10 : null,
+      porProjeto: Object.values(porProjeto).sort((a, b) => b.total - a.total),
+      naoAtribuido: naoAtribuido.sort((a, b) => b.valor - a.valor),
+    });
+  } catch (err) { next(err); }
+});
+
 // (removido — substituído pelo endpoint de centros de custo reais no final do arquivo)
 
 // GET /api/opp/campos-disponiveis — retorna amostra dos campos reais que a API do OPP retorna
