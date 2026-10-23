@@ -137,7 +137,7 @@ function avaliarSaude(p) {
   if (!p.Data_Entrega_Contrato) {
     alertas.push({ label: 'Sem data de entrega', tipo: perc >= 80 ? 'caution' : 'danger' })
   } else {
-    const venc = new Date(p.Data_Entrega_Contrato).getTime()
+    const venc = new Date(p.Data_Entrega_Contrato + 'T00:00:00').getTime()
     if (venc < hoje) {
       const diasAtraso = Math.floor((hoje - venc) / 86400000)
       alertas.push({ label: `Vencido há ${diasAtraso}d`, tipo: 'danger' })
@@ -558,7 +558,7 @@ export default function Dashboard() {
   const proximasMedicoes = (() => {
     const daTabela = medicoesFiltradas.filter(m => {
       const d = m.Data_Previsao || m.Data_Prevista
-      const dt = d ? new Date(d) : null
+      const dt = d ? new Date(d + 'T00:00:00') : null
       return dt && dt >= hoje && dt <= daqui30 && m.Status !== 'Cancelada' && m.Status !== 'Concluída'
     })
     const parseBRval = v => { if (!v) return 0; const s = String(v).replace(/\./g, '').replace(',', '.'); return parseFloat(s) || 0 }
@@ -573,7 +573,7 @@ export default function Dashboard() {
         meds.forEach((m, idx) => {
           const d = m.dataPrevisao || m.dataPrevista || ''
           if (!d) return
-          const dt = new Date(d)
+          const dt = new Date(d + 'T00:00:00')
           if (dt >= hoje && dt <= daqui30) {
             doPlano.push({
               ID_Projeto: plan.ID_Projeto,
@@ -887,7 +887,7 @@ export default function Dashboard() {
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {proximasMedicoes.map((m, i) => {
-                    const dias = Math.ceil((new Date(m.Data_Previsao || m.Data_Prevista) - hoje) / 86400000)
+                    const dias = Math.ceil((new Date((m.Data_Previsao || m.Data_Prevista) + 'T00:00:00') - hoje) / 86400000)
                     const urgente = dias <= 7
                     return (
                       <div key={i} style={{

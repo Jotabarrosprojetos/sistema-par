@@ -1521,7 +1521,12 @@ router.post('/:id/travar', async (req, res, next) => {
   try {
     const plan = await db.findOne('Planejamentos', p => p.ID_Projeto === req.params.id);
     if (!plan) return res.status(404).json({ error: 'Planejamento não encontrado.' });
-    if (plan.Travado) return res.status(400).json({ error: 'Planejamento já está travado.' });
+    // Travado vem de uma coluna TEXT: qualquer string nao-vazia e truthy em
+    // JS, entao 'false' (o valor atual de todo mundo) tambem passava aqui e
+    // bloqueava o travamento de QUALQUER planejamento, sempre. Comparacao
+    // explicita corrige sem mudar o valor ja gravado por quem chamou /travar
+    // antes (nunca ninguem, pois sempre dava 400 antes de chegar no update).
+    if (plan.Travado === true || plan.Travado === 'true') return res.status(400).json({ error: 'Planejamento já está travado.' });
     if (!plan.Nr_Contrato_OS) return res.status(400).json({ error: 'Preencha o Nome do Centro de Custo antes de travar.' });
     // Exige o vínculo confirmado (escolhido na lista real do OPP) — não deixa
     // travar com só um nome digitado que ainda não bateu com nada no OPP.

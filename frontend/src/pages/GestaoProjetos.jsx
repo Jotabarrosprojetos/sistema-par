@@ -166,7 +166,7 @@ export default function GestaoProjetos() {
       }
       if (filters.margemDias) {
         const dias = parseInt(filters.margemDias)
-        const entrega = p.Data_Entrega_Contrato ? new Date(p.Data_Entrega_Contrato) : null
+        const entrega = p.Data_Entrega_Contrato ? new Date(p.Data_Entrega_Contrato + 'T00:00:00') : null
         if (!entrega) return false
         const diff = Math.floor((new Date() - entrega) / 86400000)
         if (diff < dias) return false
