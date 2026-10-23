@@ -42,9 +42,9 @@ function gerarPDFBaseline(b, nomeProjeto) {
 
   <h2>Datas Planejadas</h2>
   <div class="grid">
-    <div class="card"><div class="card-label">Início OS</div><div class="card-val">${b.dataInicioOS ? new Date(b.dataInicioOS).toLocaleDateString('pt-BR') : '—'}</div></div>
-    <div class="card"><div class="card-label">Entrega Contrato</div><div class="card-val">${b.dataEntregaContrato ? new Date(b.dataEntregaContrato).toLocaleDateString('pt-BR') : '—'}</div></div>
-    <div class="card"><div class="card-label">Entrega Planejada</div><div class="card-val">${b.dataEntregaPlanejada ? new Date(b.dataEntregaPlanejada).toLocaleDateString('pt-BR') : '—'}</div></div>
+    <div class="card"><div class="card-label">Início OS</div><div class="card-val">${b.dataInicioOS ? new Date(b.dataInicioOS + 'T00:00:00').toLocaleDateString('pt-BR') : '—'}</div></div>
+    <div class="card"><div class="card-label">Entrega Contrato</div><div class="card-val">${b.dataEntregaContrato ? new Date(b.dataEntregaContrato + 'T00:00:00').toLocaleDateString('pt-BR') : '—'}</div></div>
+    <div class="card"><div class="card-label">Entrega Planejada</div><div class="card-val">${b.dataEntregaPlanejada ? new Date(b.dataEntregaPlanejada + 'T00:00:00').toLocaleDateString('pt-BR') : '—'}</div></div>
   </div>
 
   ${(b.horasPorColaborador || []).length > 0 ? `
@@ -71,7 +71,7 @@ function gerarPDFBaseline(b, nomeProjeto) {
   ${(b.medicoes || []).length > 0 ? `
   <h2>Medições Planejadas</h2>
   <table><tr><th>Etapa</th><th class="right">%</th><th class="right">Valor</th><th>Previsão</th></tr>
-  ${linhas(b.medicoes, m => `<tr><td>${m.etapa}</td><td class="right">${m.percentual}%</td><td class="right">${fmtCur(m.valor)}</td><td>${m.dataPrevisao ? new Date(m.dataPrevisao).toLocaleDateString('pt-BR') : '—'}</td></tr>`)}
+  ${linhas(b.medicoes, m => `<tr><td>${m.etapa}</td><td class="right">${m.percentual}%</td><td class="right">${fmtCur(m.valor)}</td><td>${m.dataPrevisao ? new Date(m.dataPrevisao + 'T00:00:00').toLocaleDateString('pt-BR') : '—'}</td></tr>`)}
   </table>` : ''}
 
   </body></html>`
@@ -439,9 +439,9 @@ export default function Aprovacao() {
                         d.respAprovacao && ["Resp. Aprovação", d.respAprovacao],
                         d.nrContratoOS && ["Centro de Custo", d.nrContratoOS],
                         d.nrOsOpp && ["O.S. OPP", d.nrOsOpp],
-                        d.dataInicioOS && ["Início O.S.", new Date(d.dataInicioOS).toLocaleDateString("pt-BR")],
-                        d.dataEntregaContrato && ["Entrega Contrato", new Date(d.dataEntregaContrato).toLocaleDateString("pt-BR")],
-                        d.dataEntregaPlanejada && ["Entrega Planejada", new Date(d.dataEntregaPlanejada).toLocaleDateString("pt-BR")],
+                        d.dataInicioOS && ["Início O.S.", new Date(d.dataInicioOS + 'T00:00:00').toLocaleDateString("pt-BR")],
+                        d.dataEntregaContrato && ["Entrega Contrato", new Date(d.dataEntregaContrato + 'T00:00:00').toLocaleDateString("pt-BR")],
+                        d.dataEntregaPlanejada && ["Entrega Planejada", new Date(d.dataEntregaPlanejada + 'T00:00:00').toLocaleDateString("pt-BR")],
                       ].filter(Boolean)
                       if (!infos.length) return null
                       return (
@@ -474,7 +474,7 @@ export default function Aprovacao() {
                               <span style={{ color: T.text1, fontWeight: 600, flex: 1 }}>{m.etapa || m.descricao || `Medição ${i+1}`}</span>
                               <div style={{ display: "flex", gap: 12, color: T.text2, flexShrink: 0 }}>
                                 {m.percentual && <span style={{ color: "#7C3AED", fontWeight: 700 }}>{m.percentual}%</span>}
-                                {(m.dataPrevisao || m.data) && <span>{new Date(m.dataPrevisao || m.data).toLocaleDateString("pt-BR")}</span>}
+                                {(m.dataPrevisao || m.data) && <span>{new Date((m.dataPrevisao || m.data) + 'T00:00:00').toLocaleDateString("pt-BR")}</span>}
                                 <span style={{ fontWeight: 700, color: "#15803D" }}>{fmt(parseBR(m.valor || m.valorPlanejado))}</span>
                               </div>
                             </div>

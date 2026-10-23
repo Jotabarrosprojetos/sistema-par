@@ -323,7 +323,7 @@ export default function ChecklistIntegridade() {
                             </td>
                             <td style={{ padding: "10px 14px", fontSize: 11, color: "#7C3AED", fontWeight: 700 }}>{p.Setor || "—"}</td>
                             <td style={{ padding: "10px 14px" }}><span style={{ fontSize: 11, fontWeight: 700, padding: "3px 9px", borderRadius: 6, background: sc.bg, color: sc.c }}>{p.Status || "—"}</span></td>
-                            <td style={{ padding: "10px 14px", fontSize: 11, fontWeight: 700, color: vencido ? "#DC2626" : "#475569" }}>{p.Vencimento ? new Date(p.Vencimento).toLocaleDateString("pt-BR") : "—"}</td>
+                            <td style={{ padding: "10px 14px", fontSize: 11, fontWeight: 700, color: vencido ? "#DC2626" : "#475569" }}>{p.Vencimento ? new Date(p.Vencimento + 'T00:00:00').toLocaleDateString("pt-BR") : "—"}</td>
                             <td style={{ padding: "10px 14px" }}>
                               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                                 <div style={{ width: 72, height: 6, background: "#E2E8F0", borderRadius: 4, overflow: "hidden" }}>

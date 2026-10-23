@@ -1993,8 +1993,8 @@ export default function PlanejamentoFinanceiro() {
                             <tr key={i} style={{ borderTop: `1px solid ${T.border}`, background: m.atrasoDias > 0 ? "rgba(239,68,68,0.05)" : T.card }}>
                               <td style={{ padding: "10px 12px", fontSize: 12, fontWeight: 700, color: T.text1 }}>{m.etapa || "—"}</td>
                               <td style={{ padding: "10px 12px", fontSize: 12, fontWeight: 800, color: "#7C3AED" }}>{m.percentual ? `${m.percentual}%` : "—"}</td>
-                              <td style={{ padding: "10px 12px", fontSize: 11, color: "#64748B", whiteSpace: "nowrap" }}>{m.dataPrevisaoPlanejada ? new Date(m.dataPrevisaoPlanejada).toLocaleDateString("pt-BR") : "—"}</td>
-                              <td style={{ padding: "10px 12px", fontSize: 11, color: "#0F172A", whiteSpace: "nowrap" }}>{m.dataRealizacao ? new Date(m.dataRealizacao).toLocaleDateString("pt-BR") : "—"}</td>
+                              <td style={{ padding: "10px 12px", fontSize: 11, color: "#64748B", whiteSpace: "nowrap" }}>{m.dataPrevisaoPlanejada ? new Date(m.dataPrevisaoPlanejada + 'T00:00:00').toLocaleDateString("pt-BR") : "—"}</td>
+                              <td style={{ padding: "10px 12px", fontSize: 11, color: "#0F172A", whiteSpace: "nowrap" }}>{m.dataRealizacao ? new Date(m.dataRealizacao + 'T00:00:00').toLocaleDateString("pt-BR") : "—"}</td>
                               <td style={{ padding: "10px 12px", fontSize: 11, fontWeight: 700, color: m.atrasoDias > 0 ? "#DC2626" : m.atrasoDias < 0 ? "#15803D" : "#94A3B8" }}>
                                 {m.atrasoDias != null ? (m.atrasoDias > 0 ? `+${m.atrasoDias}d` : m.atrasoDias < 0 ? `${m.atrasoDias}d` : "—") : "—"}
                               </td>

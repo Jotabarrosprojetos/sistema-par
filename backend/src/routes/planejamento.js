@@ -704,6 +704,10 @@ async function handleAprovar(req, res, next, acaoForced) {
       }
 
       // ── Cria O.S. no OPP automaticamente ao aprovar ────────────────────
+      // Só cria se este planejamento ainda não tem uma O.S. vinculada —
+      // sem essa checagem, toda reaprovação de replanejamento (que passa
+      // de novo por este mesmo bloco) criava uma O.S. DUPLICADA no OPP.
+      if (!plan.Nr_OS_OPP) {
       try {
         const opp = require('../services/oppService');
         const projeto = await db.findOne('Projetos_Contratos', (p) => p.ID_Projeto === plan.ID_Projeto);
@@ -720,6 +724,9 @@ async function handleAprovar(req, res, next, acaoForced) {
       } catch (errOpp) {
         // Não bloqueia a aprovação se o OPP falhar — só registra
         console.error('[Aprovação] Falha ao criar O.S. no OPP (não bloqueante):', errOpp.message);
+      }
+      } else {
+        console.log(`[Aprovação] O.S. OPP já existe (#${plan.Nr_OS_OPP}) para ${plan.Nome_Projeto} — não recriando.`);
       }
     }
 

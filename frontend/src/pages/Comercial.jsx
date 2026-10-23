@@ -434,7 +434,7 @@ export default function Comercial() {
                                   <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 4, background: (t.Tipo || '').toLowerCase() === "receita" ? "#DCFCE7" : "#FEE2E2", color: (t.Tipo || '').toLowerCase() === "receita" ? "#15803D" : "#DC2626" }}>{t.Tipo}</span>
                                 </td>
                                 <td style={{ padding: "8px 12px", fontSize: 12, color: "#334155", maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.Descricao || t.Categoria || "—"}</td>
-                                <td style={{ padding: "8px 12px", fontSize: 12, color: "#64748B" }}>{t.Data_Vencimento ? new Date(t.Data_Vencimento).toLocaleDateString("pt-BR") : "—"}</td>
+                                <td style={{ padding: "8px 12px", fontSize: 12, color: "#64748B" }}>{t.Data_Vencimento ? new Date(t.Data_Vencimento + 'T00:00:00').toLocaleDateString("pt-BR") : "—"}</td>
                                 <td style={{ padding: "8px 12px", fontSize: 12, fontWeight: 700, color: (t.Tipo || '').toLowerCase() === "receita" ? "#15803D" : "#DC2626" }}>{fmt(t.Valor)}</td>
                                 <td style={{ padding: "8px 12px" }}>
                                   <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 6px", borderRadius: 4, background: t.Situacao === "Recebido" || t.Situacao === "Pago" ? "#DCFCE7" : t.Situacao === "Atrasado" ? "#FEE2E2" : "#F1F5F9", color: t.Situacao === "Recebido" || t.Situacao === "Pago" ? "#15803D" : t.Situacao === "Atrasado" ? "#DC2626" : "#64748B" }}>{t.Situacao || "—"}</span>

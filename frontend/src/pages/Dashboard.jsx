@@ -914,7 +914,7 @@ export default function Dashboard() {
                             {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact' }).format(m.Valor_Medicao || m.Valor || 0)}
                           </div>
                           <div style={{ fontSize: 10, color: T.text2 }}>
-                            {new Date(m.Data_Previsao || m.Data_Prevista).toLocaleDateString('pt-BR')}
+                            {new Date((m.Data_Previsao || m.Data_Prevista) + 'T00:00:00').toLocaleDateString('pt-BR')}
                           </div>
                         </div>
                       </div>
