@@ -477,7 +477,7 @@ const CLICKUP_TIPOS = new Set(['TAREFA_ATRASADA', 'VENCE_HOJE', 'VENCE_AMANHA', 
 // Gera/atualiza os alertas de UM projeto a partir das tarefas já buscadas dessa lista.
 // Roda junto com syncProjectStatuses (por projeto), em vez de esperar a sincronização
 // inteira terminar — assim os alertas ficam atualizados no mesmo momento que o status.
-async function gerarAlertasProjeto(tasks, projeto) {
+async function gerarAlertasProjeto(tasks, projeto, ctx = {}) {
   const agora = new Date().toISOString();
   const desired = new Map(); // id → alert
 
@@ -620,7 +620,7 @@ async function gerarAlertasProjeto(tasks, projeto) {
   }
 
   // Planejamento financeiro reprovado
-  const planejamentos = await db.readSheet('Planejamentos');
+  const planejamentos = ctx.planejamentos || await db.readSheet('Planejamentos');
   const planProjeto = planejamentos.find(pl => pl.ID_Projeto === projeto.ID_Projeto);
   if (planProjeto && planProjeto.Status === 'Reprovado') {
     const id = `PLAN_REPROVADO_${projeto.ID_Projeto}`;
@@ -633,7 +633,8 @@ async function gerarAlertasProjeto(tasks, projeto) {
   }
 
   // Alertas ClickUp já existentes só deste projeto
-  const existentes = await db.findRows('Alertas', a => a.ID_Projeto === projeto.ID_Projeto && CLICKUP_TIPOS.has(a.Tipo_Alerta));
+  const alertasAtual = ctx.alertasAtual || await db.readSheet('Alertas');
+  const existentes = alertasAtual.filter(a => a.ID_Projeto === projeto.ID_Projeto && CLICKUP_TIPOS.has(a.Tipo_Alerta));
 
   // Remove todos os alertas antigos deste projeto antes de reinserir os atuais
   // (alertas vistos também são removidos — se a condição não existe mais, o alerta some)
@@ -978,6 +979,13 @@ async function _doSync() {
   );
   console.log(`[ClickUp] Buscando tarefas de ${listasAtivas.length} listas ativas.`);
 
+  // Le Planejamentos e Alertas UMA vez pra sincronizacao inteira, em vez de um
+  // db.readSheet/findRows por projeto dentro do loop abaixo (ver comentario em
+  // gerarAlertasProjeto — isso sozinho explicava a maior parte do consumo
+  // excessivo de transferencia no Neon, achado em 26/10/2026).
+  const planejamentosParaAlertas = await db.readSheet('Planejamentos');
+  const alertasParaSync = await db.readSheet('Alertas');
+
   for (const item of listasAtivas) {
     try {
       const tasks = await getTasks(item.id);
@@ -993,7 +1001,7 @@ async function _doSync() {
       const projeto = projetos.find(p => p.ID_ClickUp === item.id);
       if (projeto) {
         await syncProjectStatuses(mapped, [projeto], [item]);
-        await gerarAlertasProjeto(mapped, projeto);
+        await gerarAlertasProjeto(mapped, projeto, { planejamentos: planejamentosParaAlertas, alertasAtual: alertasParaSync });
       }
       allTasks.push(...mapped);
     } catch (err) {
@@ -1064,10 +1072,11 @@ async function _doSync() {
 
   // 6b. Fallback: sincroniza time_spent das tasks (captura horas manuais não retornadas pela API de entries)
   try {
+    const logHorasParaFallback = await db.readSheet('Log_Horas');
     for (const projeto of projetos) {
       if (!projeto.ID_ClickUp) continue;
       const tasksDoProjeto = allTasks.filter(t => t._listId === projeto.ID_ClickUp || t._folderId === projeto.ID_ClickUp);
-      if (tasksDoProjeto.length > 0) await syncHorasDoTimespent(tasksDoProjeto, projeto);
+      if (tasksDoProjeto.length > 0) await syncHorasDoTimespent(tasksDoProjeto, projeto, { logHorasAtual: logHorasParaFallback });
     }
   } catch (err) {
     console.error('[ClickUp] Erro no fallback time_spent:', err.message);
@@ -1417,10 +1426,14 @@ async function syncHorasPorTask(tasks, projeto) {
 }
 
 // Fallback: extrai horas do campo time_spent das tasks (captura lançamentos manuais)
-async function syncHorasDoTimespent(tasks, projeto) {
+async function syncHorasDoTimespent(tasks, projeto, ctx = {}) {
   let salvos = 0;
   // Mesma correção do syncHorasPorTask acima: lê Log_Horas uma vez, não por task.
-  const logHorasAtual = await db.readSheet('Log_Horas');
+  // ctx.logHorasAtual permite ao chamador (loop 6b de _doSync) passar uma leitura
+  // já feita uma vez pra sincronização inteira, em vez de 1 leitura completa de
+  // Log_Horas por projeto ativo — mesmo padrão do achado de 26/10/2026 em
+  // gerarAlertasProjeto/Alertas.
+  const logHorasAtual = ctx.logHorasAtual || await db.readSheet('Log_Horas');
   const porEntryId = new Map(logHorasAtual.map(r => [String(r.ID_TimeEntry_ClickUp), r]));
   for (const task of tasks) {
     if (!task.time_spent || parseInt(task.time_spent) === 0) continue;
