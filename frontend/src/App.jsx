@@ -4,6 +4,7 @@ import { AlertProvider } from './contexts/AlertContext'
 import { ThemeProvider } from './contexts/ThemeContext'
 import MainLayout from './components/Layout/MainLayout'
 import Login from './pages/Login'
+import TrocarSenhaObrigatoria from './pages/TrocarSenhaObrigatoria'
 import Dashboard from './pages/Dashboard'
 import PlanejamentoFinanceiro from './pages/PlanejamentoFinanceiro'
 import GestaoProjetos from './pages/GestaoProjetos'
@@ -36,7 +37,9 @@ function PrivateRoute({ children }) {
       </div>
     </div>
   )
-  return user ? children : <Navigate to="/login" replace />
+  if (!user) return <Navigate to="/login" replace />
+  if (user.deveTrocarSenha) return <Navigate to="/trocar-senha-obrigatoria" replace />
+  return children
 }
 
 export default function App() {
@@ -47,6 +50,7 @@ export default function App() {
         <AlertProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/trocar-senha-obrigatoria" element={<TrocarSenhaObrigatoria />} />
             <Route path="/" element={
               <PrivateRoute>
                 <MainLayout />

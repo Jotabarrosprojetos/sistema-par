@@ -71,7 +71,8 @@ router.post('/login', async (req, res, next) => {
         nome: user.Nome || user.Usuario, 
         email: user.Email || user.Usuario, 
         perfil: user.Perfil || 'Admin', 
-        empresa: user.Empresa || 'Jota Barros Projetos' 
+        empresa: user.Empresa || 'Jota Barros Projetos',
+        deveTrocarSenha: String(user.Deve_Trocar_Senha).toLowerCase() === 'true',
       },
     });
   } catch (err) {
@@ -132,10 +133,15 @@ router.put('/me/senha', require('../middleware/auth').authMiddleware, async (req
     let senhaValida = false;
     if (user.Senha_Hash) senhaValida = await bcrypt.compare(senhaAtual, user.Senha_Hash);
     else if (user.Senha) senhaValida = senhaAtual === user.Senha;
-    if (!senhaValida) return res.status(401).json({ error: 'Senha atual incorreta.' });
+    // 400, não 401: usuário já está autenticado, isso é validação de formulário —
+    // 401 aciona o interceptor global do axios (api.js) que força logout na hora,
+    // escondendo a mensagem "senha atual incorreta" do usuário.
+    if (!senhaValida) return res.status(400).json({ error: 'Senha atual incorreta.' });
 
     const novoHash = await bcrypt.hash(novaSenha, 12);
-    await db.updateRowById('USER', 'ID', user.ID, { ...user, Senha_Hash: novoHash });
+    // Deve_Trocar_Senha: 'false' — qualquer troca de senha bem-sucedida (voluntária
+    // ou a obrigatória de primeiro acesso) encerra a obrigação de trocar.
+    await db.updateRowById('USER', 'ID', user.ID, { ...user, Senha_Hash: novoHash, Deve_Trocar_Senha: 'false' });
     res.json({ message: 'Senha alterada com sucesso.' });
   } catch (err) { next(err); }
 });
@@ -163,7 +169,9 @@ router.post('/usuarios', require('../middleware/auth').authMiddleware, async (re
     if (!PERFIS.includes(perfil)) return res.status(400).json({ error: 'Perfil inválido.' });
 
     const senhaHash = await bcrypt.hash(senha, 12);
-    const user = { ID: uuidv4(), Nome: nome, Email: email.toLowerCase().trim(), Senha_Hash: senhaHash, Perfil: perfil, Empresa: 'Jota Barros Projetos', Ativo: 'true', Criado_Em: new Date().toISOString(), Ultimo_Login: '' };
+    // Deve_Trocar_Senha: 'true' — a senha foi escolhida pelo admin, não pela pessoa,
+    // então ela é obrigada a trocar no primeiro login (ver PUT /me/senha abaixo).
+    const user = { ID: uuidv4(), Nome: nome, Email: email.toLowerCase().trim(), Senha_Hash: senhaHash, Perfil: perfil, Empresa: 'Jota Barros Projetos', Ativo: 'true', Criado_Em: new Date().toISOString(), Ultimo_Login: '', Deve_Trocar_Senha: 'true' };
     await db.insertRow('USER', user);
     res.status(201).json({ message: 'Usuário criado com sucesso.', id: user.ID });
   } catch (err) { next(err); }

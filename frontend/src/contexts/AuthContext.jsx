@@ -73,8 +73,22 @@ export function AuthProvider({ children }) {
     return u
   }
 
+  // Atualiza o usuário em memória + no storage (localStorage ou sessionStorage,
+  // o que estiver em uso) sem precisar deslogar — usado depois da troca de senha
+  // obrigatória, pra tirar a flag deveTrocarSenha sem um novo login.
+  const atualizarUsuario = useCallback((patch) => {
+    setUser((prev) => {
+      if (!prev) return prev
+      const atualizado = { ...prev, ...patch }
+      const lembrar = localStorage.getItem('par_lembrar') === 'true'
+      const storage = getStorage(lembrar)
+      storage.setItem('par_user', JSON.stringify(atualizado))
+      return atualizado
+    })
+  }, [])
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, atualizarUsuario }}>
       {children}
     </AuthContext.Provider>
   )
