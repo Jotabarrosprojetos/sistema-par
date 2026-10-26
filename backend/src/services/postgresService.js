@@ -230,11 +230,20 @@ function toDb(val) {
 // MESMAS tabelas de novo cada uma — a causa real da demora relatada pelo
 // chef pra carregar/atualizar o PAR. Os dados locais só mudam via sync
 // agendado (ClickUp a cada 15min, OPP a cada 2h) ou por uma gravação direta
-// do próprio Par — então um TTL curto não arrisca mostrar dado visivelmente
-// desatualizado, e evita reler a tabela inteira várias vezes por segundo.
+// do próprio Par.
+// 90s (valor original) se mostrou curto demais na prática (26/10/2026):
+// o cron do ClickUp roda a cada 15min e, a cada rodada, qualquer escrita
+// invalida o cache da tabela na hora — e aí um loop que lê+escreve a MESMA
+// tabela várias vezes (ex.: autoImportProjects) força várias leituras
+// completas por rodada, o dia inteiro, sem ninguém usando o sistema. Isso
+// multiplicado por 96 rodadas/dia explicou ~23GB de transferência no Neon
+// em 3 dias pra um banco que tem ~9MB no total. Subido pra 5min: ainda
+// cobre bem o intervalo entre sync e sync sem mostrar dado velho pro
+// usuário (que só muda via esses mesmos syncs ou gravação direta no Par,
+// que já invalida na hora), mas reduz MUITO a frequência de releitura.
 // Toda função de escrita abaixo (insert/update/delete) invalida a tabela que
 // grava, pra nunca mostrar dado velho depois de uma edição do usuário.
-const CACHE_TTL_MS = 90 * 1000;
+const CACHE_TTL_MS = 5 * 60 * 1000;
 const cacheLeitura = new Map(); // tableName -> { dados, expiraEm }
 
 function invalidarCache(tableName) {

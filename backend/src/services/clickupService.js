@@ -438,13 +438,23 @@ async function autoImportProjects(items) {
     broadcast('sync', { type: 'PROJETOS_IMPORTADOS', count: novosProjetos.length });
   }
 
+  // Lê Planejamentos UMA vez antes do loop, em vez de um db.findRows por
+  // projeto atualizado (= releitura completa da tabela a cada iteração, já
+  // que a escrita de ID_Projeto anterior invalida o cache — achado em
+  // 26/10/2026 como parte do que explicou ~23GB de transferência no Neon em
+  // 3 dias pra um banco de ~9MB; mesmo padrão já corrigido no sync de
+  // Log_Horas mais abaixo neste arquivo).
+  const planejamentosAtual = atualizacoes.some(upd => upd.Nome)
+    ? await db.readSheet('Planejamentos')
+    : null;
+
   for (const upd of atualizacoes) {
     try {
       const { ID_Projeto, _nomeAnterior, ...campos } = upd;
       await db.updateRowById('Projetos_Contratos', 'ID_Projeto', ID_Projeto, campos);
       // Propaga novo nome para tabela Planejamentos (campo Nome_Projeto)
-      if (campos.Nome) {
-        const plans = await db.findRows('Planejamentos', p => p.ID_Projeto === ID_Projeto);
+      if (campos.Nome && planejamentosAtual) {
+        const plans = planejamentosAtual.filter(p => p.ID_Projeto === ID_Projeto);
         for (const plan of plans) {
           await db.updateRowById('Planejamentos', 'ID_Planejamento', plan.ID_Planejamento, { ...plan, Nome_Projeto: campos.Nome });
         }
