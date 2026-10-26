@@ -2,6 +2,7 @@
 import { toast } from "react-hot-toast"
 import { ArrowPathIcon, XMarkIcon, BuildingOffice2Icon, BanknotesIcon, FolderIcon } from "@heroicons/react/24/outline"
 import api from "../utils/api"
+import { useAuth } from "../contexts/AuthContext"
 
 const fmt = (v) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0)
 const parseBR = (v) => parseFloat(String(v || 0).replace(/\./g, '').replace(',', '.')) || 0
@@ -28,6 +29,8 @@ function StatCard({ label, value, color = "#7C3AED" }) {
 const STATUS_TERC_WORKFLOW = ["Backlog", "Autorizado", "Em Negociação", "Ordem de Compra", "Em Andamento", "Análise Técnica", "Aguardando Aprovação Externa", "Contas a Pagar", "Concluído", "Solicitado", "Confirmado", "Entregue", "Cancelado"]
 
 export default function Comercial() {
+  const { user } = useAuth()
+  const podeVerTerceirizados = user?.perfil !== "Leitura-Comercial"
   const [clientes, setClientes] = useState([])
   const [terceirizados, setTerceirizados] = useState([])
   const [loading, setLoading] = useState(true)
@@ -167,7 +170,7 @@ export default function Comercial() {
 
       {/* Tabs */}
       <div style={{ display: "flex", gap: 4, background: "#F1F5F9", borderRadius: 10, padding: 4, width: "fit-content", marginBottom: 20 }}>
-        {[{ key: "clientes", label: "Clientes OPP" }, { key: "terceirizados", label: "Demandas de Terceirizacao" }].map(tab => (
+        {[{ key: "clientes", label: "Clientes OPP" }, podeVerTerceirizados && { key: "terceirizados", label: "Demandas de Terceirizacao" }].filter(Boolean).map(tab => (
           <button key={tab.key} onClick={() => setAba(tab.key)} style={{
             padding: "8px 20px", borderRadius: 8, border: "none", cursor: "pointer", fontWeight: 700, fontSize: 13,
             background: aba === tab.key ? "#fff" : "transparent",

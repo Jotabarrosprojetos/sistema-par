@@ -22,9 +22,9 @@ const NAV_GROUPS = [
   {
     label: 'Financeiro',
     items: [
-      { to: '/planejamento', label: 'Plan. Financeiro',         icon: CalculatorIcon,           perfis: ['PO','Coordenador','Admin','Diretoria'] },
-      { to: '/aprovacao',    label: 'Aprovações & Baseline',    icon: ShieldCheckIcon,          perfis: ['PO','Coordenador','Admin','Diretoria'], badge: 'aprovacao' },
-      { to: '/medicoes',     label: 'Medições & Faturamento',   icon: ChartBarIcon,             perfis: ['PO','Financeiro','Comercial','Coordenador','Admin','Diretoria'] },
+      { to: '/planejamento', label: 'Plan. Financeiro',         icon: CalculatorIcon,           perfis: ['PO','Coordenador','Admin','Diretoria','Leitura-Financeiro'] },
+      { to: '/aprovacao',    label: 'Aprovações & Baseline',    icon: ShieldCheckIcon,          perfis: ['PO','Coordenador','Admin','Diretoria','Leitura-Financeiro'], badge: 'aprovacao' },
+      { to: '/medicoes',     label: 'Medições & Faturamento',   icon: ChartBarIcon,             perfis: ['PO','Financeiro','Comercial','Coordenador','Admin','Diretoria','Leitura-Financeiro'] },
       { to: '/extrato',               label: 'Extrato por Projeto',      icon: BanknotesIcon,               perfis: ['Financeiro','Coordenador','Admin','Diretoria'] },
       { to: '/dashboard-financeiro',  label: 'Dashboard Financeiro',     icon: PresentationChartLineIcon,   perfis: ['Financeiro','Coordenador','Admin','Diretoria'] },
       { to: '/baseline-real',         label: 'Baseline x Real',          icon: ScaleIcon,                   perfis: ['Financeiro','Coordenador','Admin','Diretoria'] },
@@ -34,8 +34,8 @@ const NAV_GROUPS = [
   {
     label: 'Operacional',
     items: [
-      { to: '/terceirizados',  label: 'Terceirizados',          icon: UsersIcon,                perfis: ['PO','Comercial','Coordenador','Admin','Diretoria'] },
-      { to: '/comercial',      label: 'Comercial / OPP',        icon: BuildingOffice2Icon,      perfis: ['Comercial','Financeiro','Admin','Diretoria'] },
+      { to: '/terceirizados',  label: 'Terceirizados',          icon: UsersIcon,                perfis: ['PO','Comercial','Coordenador','Admin','Diretoria','Leitura-Financeiro'] },
+      { to: '/comercial',      label: 'Comercial / OPP',        icon: BuildingOffice2Icon,      perfis: ['Comercial','Financeiro','Admin','Diretoria','Leitura-Financeiro','Leitura-Comercial'] },
       { to: '/importacao-opp', label: 'Importar Opportune',     icon: ArrowUpTrayIcon,          perfis: ['Financeiro','Admin','Coordenador','Diretoria'] },
     ],
   },
@@ -43,7 +43,7 @@ const NAV_GROUPS = [
     label: 'Sistema',
     items: [
       { to: '/alertas',        label: 'Central de Alertas',     icon: BellAlertIcon },
-      { to: '/auditoria',      label: 'Auditoria',              icon: ClockIcon,                perfis: ['Admin','Diretoria'] },
+      { to: '/auditoria',      label: 'Auditoria',              icon: ClockIcon,                perfis: ['Admin','Diretoria','Leitura-Financeiro'] },
       { to: '/vincular-os',    label: 'Vincular OS OPP',        icon: KeyIcon,                  perfis: ['Admin','Diretoria'] },
       { to: '/configuracoes',  label: 'Configurações',          icon: Cog6ToothIcon,            perfis: ['Admin','Coordenador','Diretoria'] },
     ],

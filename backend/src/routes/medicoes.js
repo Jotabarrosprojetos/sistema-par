@@ -1,7 +1,7 @@
 ﻿const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const db = process.env.USE_POSTGRES === 'true' ? require('../services/postgresService') : require('../services/googleSheetsService');
-const { authMiddleware } = require('../middleware/auth');
+const { authMiddleware, authorize } = require('../middleware/auth');
 const { createAlert } = require('../services/alertService');
 const { auditMiddleware } = require('../middleware/audit');
 
@@ -21,7 +21,7 @@ function pBR(v) {
 }
 
 // GET /api/medicoes/oc/:oc — busca medição pelo campo O.C. (chave OPP)
-router.get('/oc/:oc', async (req, res, next) => {
+router.get('/oc/:oc', authMiddleware, authorize('PO','Financeiro','Comercial','Coordenador','Diretoria','Leitura-Financeiro'), async (req, res, next) => {
   try {
     const medicao = await db.findOne('Medicoes', (m) => m.OC === req.params.oc);
     if (!medicao) return res.status(404).json({ error: 'Medição com este O.C. não encontrada.' });
@@ -38,7 +38,7 @@ router.get('/oc/:oc', async (req, res, next) => {
 // também pelo dashboard-financeiro.js no cálculo do "Recebido" por projeto
 // — ver comentário no topo daquele arquivo. Extração 1:1, sem mudar nada do
 // comportamento desta rota.
-router.get('/', async (req, res, next) => {
+router.get('/', authMiddleware, authorize('PO','Financeiro','Comercial','Coordenador','Diretoria','Leitura-Financeiro'), async (req, res, next) => {
   try {
     const { projeto, status } = req.query;
     const { calcularMedicoesComOPP } = require('../services/medicoesService');
@@ -51,7 +51,7 @@ router.get('/', async (req, res, next) => {
 
 
 // POST /api/medicoes — cria medição
-router.post('/', audit, async (req, res, next) => {
+router.post('/', authMiddleware, authorize('PO','Financeiro','Comercial','Coordenador','Diretoria'), audit, async (req, res, next) => {
   try {
     const { idProjeto, etapa, percentual, valor, dataPrevisao, idTarefaClickUp, observacao } = req.body;
 
@@ -88,7 +88,7 @@ router.post('/', audit, async (req, res, next) => {
 });
 
 // PUT /api/medicoes/:id — atualiza medição (NF, datas, status)
-router.put('/:id', audit, async (req, res, next) => {
+router.put('/:id', authMiddleware, authorize('PO','Financeiro','Comercial','Coordenador','Diretoria'), audit, async (req, res, next) => {
   try {
     const medicao = await db.findOne('Medicoes', (m) => m.ID_Medicao === req.params.id);
     if (!medicao) return res.status(404).json({ error: 'Medição não encontrada.' });
@@ -132,7 +132,7 @@ router.put('/:id', audit, async (req, res, next) => {
 });
 
 // GET /api/medicoes/previsao/recebiveis — previsão de recebimentos por mês
-router.get('/previsao/recebiveis', async (req, res, next) => {
+router.get('/previsao/recebiveis', authMiddleware, authorize('PO','Financeiro','Comercial','Coordenador','Diretoria','Leitura-Financeiro'), async (req, res, next) => {
   try {
     const medicoes = await db.readSheet('Medicoes');
     const projects = await db.readSheet('Projetos_Contratos');

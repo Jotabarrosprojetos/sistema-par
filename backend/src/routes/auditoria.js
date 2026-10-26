@@ -1,9 +1,10 @@
 const express = require('express');
 const { Pool } = require('pg');
-const { authMiddleware } = require('../middleware/auth');
+const { authMiddleware, authorize } = require('../middleware/auth');
 
 const router = express.Router();
 router.use(authMiddleware);
+router.use(authorize('Diretoria', 'Leitura-Financeiro'));
 
 function getPool() {
   return new Pool({

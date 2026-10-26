@@ -4,7 +4,7 @@ import { Settings, RefreshCw, Database, Bell, Link, CheckCircle, AlertTriangle, 
 import api from "../utils/api"
 import { useTheme } from "../contexts/ThemeContext"
 
-const PERFIS = ['Admin', 'PO', 'Coordenador', 'Comercial', 'Financeiro', 'Diretoria', 'Visualizador']
+const PERFIS = ['Admin', 'PO', 'Coordenador', 'Comercial', 'Financeiro', 'Diretoria', 'Visualizador', 'Leitura-Financeiro', 'Leitura-Comercial']
 
 function Section({ title, icon: Icon, children }) {
   const { isDark } = useTheme()

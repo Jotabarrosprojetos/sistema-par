@@ -159,7 +159,7 @@ router.post('/usuarios', require('../middleware/auth').authMiddleware, async (re
     const existe = await db.findOne('USER', u => (u.Email || '').toLowerCase() === email.toLowerCase().trim());
     if (existe) return res.status(400).json({ error: 'E-mail já cadastrado.' });
 
-    const PERFIS = ['Admin', 'PO', 'Coordenador', 'Comercial', 'Financeiro', 'Diretoria', 'Visualizador'];
+    const PERFIS = ['Admin', 'PO', 'Coordenador', 'Comercial', 'Financeiro', 'Diretoria', 'Visualizador', 'Leitura-Financeiro', 'Leitura-Comercial'];
     if (!PERFIS.includes(perfil)) return res.status(400).json({ error: 'Perfil inválido.' });
 
     const senhaHash = await bcrypt.hash(senha, 12);

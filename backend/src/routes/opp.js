@@ -1,5 +1,5 @@
 ﻿const express = require('express');
-const { authMiddleware } = require('../middleware/auth');
+const { authMiddleware, authorize } = require('../middleware/auth');
 const opp = require('../services/oppService');
 
 const router = express.Router();
@@ -1071,7 +1071,7 @@ router.get('/extrato-por-projeto', async (req, res, next) => {
 // nome (texto) perde e mistura lançamentos (ex.: Itaú Unibanco: por ID achava
 // 105 lançamentos, por nome só 1) — nome fica como fallback só pra quem ainda
 // não tem o ID preenchido no cache local.
-router.get('/financeiro-cliente', async (req, res, next) => {
+router.get('/financeiro-cliente', authMiddleware, authorize('Comercial','Financeiro','Diretoria','Leitura-Financeiro','Leitura-Comercial'), async (req, res, next) => {
   try {
     const db = process.env.USE_POSTGRES === 'true' ? require('../services/postgresService') : require('../services/googleSheetsService');
     const idCliente = String(req.query.idCliente || '').trim();
