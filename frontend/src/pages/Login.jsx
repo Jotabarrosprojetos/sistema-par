@@ -228,7 +228,7 @@ export default function Login() {
                 <label style={{ fontSize: 12.5, fontWeight: 700, color: '#5E7899' }}>
                   Senha
                 </label>
-                <button
+                <button className="press-feedback"
                   type="button"
                   style={{ fontSize: 12, color: CYAN_TEXT, background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 600, padding: 0 }}
                 >
@@ -258,7 +258,7 @@ export default function Login() {
                   onBlur={e => { if (!errors.senha) { e.target.style.borderColor = '#D8E4EE'; e.target.style.boxShadow = 'none' } }}
                   {...register('senha', { required: 'Campo obrigatório' })}
                 />
-                <button
+                <button className="press-feedback"
                   type="button"
                   tabIndex={-1}
                   onClick={() => setShowPassword(p => !p)}
@@ -291,7 +291,7 @@ export default function Login() {
             </label>
 
             {/* Botão login */}
-            <button
+            <button className="press-feedback"
               type="submit"
               disabled={loading}
               style={{
@@ -336,7 +336,7 @@ export default function Login() {
           </div>
 
           {/* Registrar conta */}
-          <button
+          <button className="press-feedback"
             style={{
               width: '100%',
               background: 'transparent',

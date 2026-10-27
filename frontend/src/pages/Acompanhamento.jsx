@@ -175,9 +175,15 @@ export default function Acompanhamento() {
                   <div style={{ padding: 20, textAlign: 'center', color: '#94A3B8', fontSize: 13 }}>Nenhum projeto encontrado</div>
                 ) : projetosFiltrados.map(p => (
                   <div key={p.ID_Projeto} onClick={() => { setProjetoId(p.ID_Projeto); setShowDropdown(false); setFiltroBusca('') }}
-                    style={{ padding: '11px 16px', cursor: 'pointer', borderBottom: '1px solid #F1F5F9', background: projetoId === p.ID_Projeto ? 'rgba(0,181,204,0.06)' : '#fff', transition: 'background 0.1s' }}
+                    role="option"
+                    aria-selected={projetoId === p.ID_Projeto}
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setProjetoId(p.ID_Projeto); setShowDropdown(false); setFiltroBusca('') } }}
+                    style={{ padding: '11px 16px', cursor: 'pointer', borderBottom: '1px solid #F1F5F9', background: projetoId === p.ID_Projeto ? 'rgba(0,181,204,0.06)' : '#fff', transition: 'background 0.1s', outline: 'none' }}
                     onMouseEnter={e => e.currentTarget.style.background = '#F8FAFC'}
-                    onMouseLeave={e => e.currentTarget.style.background = projetoId === p.ID_Projeto ? 'rgba(0,181,204,0.06)' : '#fff'}>
+                    onMouseLeave={e => e.currentTarget.style.background = projetoId === p.ID_Projeto ? 'rgba(0,181,204,0.06)' : '#fff'}
+                    onFocus={e => e.currentTarget.style.background = '#F8FAFC'}
+                    onBlur={e => e.currentTarget.style.background = projetoId === p.ID_Projeto ? 'rgba(0,181,204,0.06)' : '#fff'}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <span style={{ fontWeight: projetoId === p.ID_Projeto ? 800 : 600, fontSize: 13, color: projetoId === p.ID_Projeto ? '#007A8A' : '#0F172A' }}>{p.Nome}</span>
                       <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0, marginLeft: 8 }}>

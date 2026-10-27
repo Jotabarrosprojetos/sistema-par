@@ -315,9 +315,13 @@ export default function ExtratoProjeto() {
                     const rowBg = i % 2 === 0 ? c.surface : c.surface2
                     return (
                       <tr key={p.id} onClick={() => setProjetoSel(p.id)}
-                        style={{ borderTop: `1px solid ${c.borderSoft}`, cursor: "pointer", background: rowBg }}
+                        tabIndex={0}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setProjetoSel(p.id) } }}
+                        style={{ borderTop: `1px solid ${c.borderSoft}`, cursor: "pointer", background: rowBg, outline: "none" }}
                         onMouseEnter={e => e.currentTarget.style.background = c.hover}
-                        onMouseLeave={e => e.currentTarget.style.background = rowBg}>
+                        onMouseLeave={e => e.currentTarget.style.background = rowBg}
+                        onFocus={e => e.currentTarget.style.background = c.hover}
+                        onBlur={e => e.currentTarget.style.background = rowBg}>
                         <td style={{ padding: "11px 14px", maxWidth: 240 }}>
                           <div style={{ fontSize: 13, fontWeight: 700, color: c.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.nome}</div>
                           <div style={{ fontSize: 11, color: c.textFaint }}>{p.cliente}</div>

@@ -227,9 +227,14 @@ export default function Comercial() {
                     {clientesFiltrados.length === 0 ? (
                       <tr><td colSpan={6} style={{ padding: "48px 0", textAlign: "center", color: "#94A3B8" }}>Nenhum cliente encontrado</td></tr>
                     ) : clientesFiltrados.slice(0, 100).map((c, i) => (
-                      <tr key={i} onClick={() => abrirDetalhe(c)} style={{ borderTop: "1px solid #F1F5F9", cursor: "pointer", transition: "background 0.12s" }}
+                      <tr key={i} onClick={() => abrirDetalhe(c)}
+                        tabIndex={0}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrirDetalhe(c) } }}
+                        style={{ borderTop: "1px solid #F1F5F9", cursor: "pointer", transition: "background 0.12s", outline: "none" }}
                         onMouseEnter={e => e.currentTarget.style.background = "#F8FAFC"}
-                        onMouseLeave={e => e.currentTarget.style.background = ""}>
+                        onMouseLeave={e => e.currentTarget.style.background = ""}
+                        onFocus={e => e.currentTarget.style.background = "#F8FAFC"}
+                        onBlur={e => e.currentTarget.style.background = ""}>
                         <td style={{ padding: "12px 16px", fontSize: 13, fontWeight: 700, color: "#0F172A" }}>{c.razao_cliente || "—"}</td>
                         <td style={{ padding: "12px 16px", fontSize: 13, color: "#334155" }}>{c.fantasia_cliente || "—"}</td>
                         <td style={{ padding: "12px 16px", fontSize: 13, color: "#475569" }}>{c.tipo_cadastro || "—"}</td>

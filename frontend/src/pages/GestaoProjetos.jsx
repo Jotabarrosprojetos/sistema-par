@@ -454,10 +454,14 @@ export default function GestaoProjetos() {
                     return (
                       <React.Fragment key={p.ID_Projeto}>
                       <tr
-                        style={{ borderBottom: isExpanded ? 'none' : `1px solid ${T.border}`, background: isExpanded ? (isDark ? '#1A2540' : '#F0F4FF') : T.card, transition: 'background 0.12s', cursor: 'pointer' }}
+                        style={{ borderBottom: isExpanded ? 'none' : `1px solid ${T.border}`, background: isExpanded ? (isDark ? '#1A2540' : '#F0F4FF') : T.card, transition: 'background 0.12s', cursor: 'pointer', outline: 'none' }}
                         onClick={() => toggleExpand(p)}
+                        tabIndex={0}
+                        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleExpand(p) } }}
                         onMouseEnter={e => { if (!isExpanded) e.currentTarget.style.background = T.hover }}
                         onMouseLeave={e => { if (!isExpanded) e.currentTarget.style.background = T.card }}
+                        onFocus={e => { e.currentTarget.style.boxShadow = 'inset 3px 0 0 #7C3AED' }}
+                        onBlur={e => { e.currentTarget.style.boxShadow = '' }}
                       >
                         <td style={{ paddingLeft: 16, paddingRight: 12, paddingTop: 11, paddingBottom: 11 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
