@@ -42,12 +42,20 @@ export default function ProjectCard({ project }) {
     : project.Status?.includes('Concluíd') || project.Status?.includes('Concluido') ? '#16A34A'
     : '#1E3A5F'
 
+  const abrirProjeto = () => navigate(`/projetos?id=${project.ID_Projeto}`)
+
   return (
     <div
       className="bg-white rounded-xl border border-slate-200 cursor-pointer
-                 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md
-                 hover:border-par-300 group relative overflow-hidden"
-      onClick={() => navigate(`/projetos?id=${project.ID_Projeto}`)}
+                 transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]
+                 hover:-translate-y-0.5 hover:shadow-md hover:border-par-300
+                 active:translate-y-0 active:scale-[0.99] active:shadow-sm
+                 focus-visible:outline focus-visible:outline-2 focus-visible:outline-par-400 focus-visible:outline-offset-2
+                 group relative overflow-hidden"
+      onClick={abrirProjeto}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); abrirProjeto() } }}
     >
       {/* Left accent bar */}
       <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-full"

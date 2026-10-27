@@ -277,7 +277,7 @@ function PainelPersonalizar({ secoes, onChange, onClose }) {
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
         <span style={{ fontWeight: 800, fontSize: 14, color: T2.text1 }}>Personalizar Dashboard</span>
-        <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', display: 'flex', alignItems: 'center' }}>
+        <button className="press-feedback" onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94A3B8', display: 'flex', alignItems: 'center' }}>
           <X size={16} />
         </button>
       </div>
@@ -308,7 +308,7 @@ function PainelPersonalizar({ secoes, onChange, onClose }) {
           )
         })}
       </div>
-      <button onClick={() => onChange(SECOES_DEFAULT)} style={{
+      <button className="press-feedback" onClick={() => onChange(SECOES_DEFAULT)} style={{
         width: '100%', marginTop: 12, padding: '8px 0', borderRadius: 8,
         border: `1.5px solid ${T2.border}`, background: T2.cardAlt,
         fontSize: 12, fontWeight: 700, color: '#64748B', cursor: 'pointer',
@@ -608,7 +608,7 @@ export default function Dashboard() {
   const countCaution = projetosRicos.filter(p => p._nivel === 'caution').length
 
   return (
-    <div style={{ padding: '28px 32px', maxWidth: 1400, margin: '0 auto', background: T.bg, minHeight: '100vh' }}>
+    <div className="fade-in" style={{ padding: '28px 32px', maxWidth: 1400, margin: '0 auto', background: T.bg, minHeight: '100vh' }}>
 
       {/* ── Header ── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -622,7 +622,7 @@ export default function Dashboard() {
         </div>
         <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
           {alertasCriticos.length > 0 && (
-            <button onClick={() => navigate('/alertas')} style={{
+            <button className="press-feedback" onClick={() => navigate('/alertas')} style={{
               padding: '8px 16px', borderRadius: 10, border: 'none',
               background: '#EF4444', color: '#fff', fontWeight: 800, fontSize: 12, cursor: 'pointer',
               display: 'flex', alignItems: 'center', gap: 6,
@@ -642,7 +642,7 @@ export default function Dashboard() {
           </div>
           {/* Botão personalizar */}
           <div style={{ position: 'relative' }}>
-            <button
+            <button className="press-feedback"
               onClick={() => setMostrarPersonalizar(v => !v)}
               style={{
                 padding: '8px 14px', borderRadius: 10, cursor: 'pointer',
@@ -673,7 +673,7 @@ export default function Dashboard() {
         return (
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 20, alignItems: 'center' }}>
             <span style={{ fontSize: 12, fontWeight: 700, color: T.text3, marginRight: 4 }}>SETOR:</span>
-            <button
+            <button className="press-feedback"
               onClick={() => setFiltroSetor('')}
               style={{
                 padding: '5px 14px', borderRadius: 20, fontSize: 12, fontWeight: 700, cursor: 'pointer',
@@ -688,7 +688,7 @@ export default function Dashboard() {
             {todosSetores.map(s => {
               const count = projetos.filter(p => p.Setor === s).length
               return (
-                <button
+                <button className="press-feedback"
                   key={s}
                   onClick={() => setFiltroSetor(filtroSetor === s ? '' : s)}
                   style={{
@@ -715,7 +715,7 @@ export default function Dashboard() {
           <div style={{ flex: 1, fontWeight: 700, color: '#5B21B6', fontSize: 14 }}>
             {pendentesAprov.length} planejamento(s) aguardando aprovação da Diretoria
           </div>
-          <button onClick={() => navigate('/aprovacao')} style={{ padding: '7px 16px', borderRadius: 8, border: 'none', background: '#7C3AED', color: '#fff', fontWeight: 700, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <button className="press-feedback" onClick={() => navigate('/aprovacao')} style={{ padding: '7px 16px', borderRadius: 8, border: 'none', background: '#7C3AED', color: '#fff', fontWeight: 700, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}>
             Aprovar Agora <ArrowRight size={13} />
           </button>
         </div>
@@ -875,7 +875,7 @@ export default function Dashboard() {
                     Vencendo nos próximos 30 dias{filtroSetor ? ` · ${filtroSetor}` : ''}
                   </div>
                 </div>
-                <button onClick={() => navigate('/medicoes')} style={{ padding: '6px 12px', borderRadius: 8, border: `1px solid ${T.border}`, background: T.cardAlt, fontSize: 11, fontWeight: 700, color: T.text2, cursor: 'pointer' }}>
+                <button className="press-feedback" onClick={() => navigate('/medicoes')} style={{ padding: '6px 12px', borderRadius: 8, border: `1px solid ${T.border}`, background: T.cardAlt, fontSize: 11, fontWeight: 700, color: T.text2, cursor: 'pointer' }}>
                   Ver todas →
                 </button>
               </div>
@@ -1011,7 +1011,7 @@ export default function Dashboard() {
                 <span style={{ color: '#EF4444', fontWeight: 700 }}>● Risco {countDanger}</span>
               </div>
             </div>
-            <button onClick={() => navigate('/projetos')} style={{ padding: '6px 12px', borderRadius: 8, border: `1px solid ${T.border}`, background: T.cardAlt, fontSize: 11, fontWeight: 700, color: T.text2, cursor: 'pointer' }}>
+            <button className="press-feedback" onClick={() => navigate('/projetos')} style={{ padding: '6px 12px', borderRadius: 8, border: `1px solid ${T.border}`, background: T.cardAlt, fontSize: 11, fontWeight: 700, color: T.text2, cursor: 'pointer' }}>
               Ver todos →
             </button>
           </div>
@@ -1026,7 +1026,7 @@ export default function Dashboard() {
               </div>
               {projetosRicos.length > 12 && (
                 <div style={{ textAlign: 'center', marginTop: 14 }}>
-                  <button
+                  <button className="press-feedback"
                     onClick={() => setMostrarTodosSaude(v => !v)}
                     style={{ padding: '7px 18px', borderRadius: 8, border: `1px solid ${T.border}`, background: T.cardAlt, fontSize: 12, fontWeight: 700, color: T.text2, cursor: 'pointer' }}
                   >

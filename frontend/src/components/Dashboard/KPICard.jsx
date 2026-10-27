@@ -51,9 +51,12 @@ export default function KPICard({ label, value, subtitle, trend, trendLabel, col
   return (
     <div
       className={`${c.bg} rounded-2xl border p-6 flex flex-col gap-3 relative overflow-hidden
-                  transition-all duration-200 hover:border-par-300 hover:shadow-md hover:-translate-y-0.5
-                  ${onClick ? 'cursor-pointer' : ''}`}
+                  transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)]
+                  ${onClick ? 'cursor-pointer hover:border-par-300 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.985] active:shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-par-400 focus-visible:outline-offset-2' : ''}`}
       onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(e) } } : undefined}
     >
       {/* Accent circle */}
       {c.accent && (

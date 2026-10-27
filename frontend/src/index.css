@@ -53,6 +53,11 @@ select option { background: #fff; color: var(--text); }
 /* Card clicável (lista/seletor) — dá feedback no pointer-down, não só no hover */
 .card-interactive { cursor: pointer; }
 .card-interactive:active { transform: scale(0.985); }
+
+/* Utilitario generico pra qualquer botao/chip com estilo inline (nao usa .btn-*):
+   feedback no pointer-down, sem precisar reescrever o style de cada um. */
+.press-feedback { transition: transform 0.15s var(--ease-fluid); }
+.press-feedback:active { transform: scale(0.96); }
 .card-glass {
   background: var(--surface);
   border-radius: 14px;
