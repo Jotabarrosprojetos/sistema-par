@@ -96,6 +96,9 @@ function StatCard({ label, value, sub, icon, color = '#7C3AED', bg, warn, onClic
   return (
     <div
       onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(e) } } : undefined}
       style={{
         background: solidBg,
         borderRadius: 16, padding: '20px 22px',
@@ -103,9 +106,14 @@ function StatCard({ label, value, sub, icon, color = '#7C3AED', bg, warn, onClic
         cursor: onClick ? 'pointer' : 'default',
         transition: 'all 0.18s',
         position: 'relative', overflow: 'hidden',
+        outline: 'none',
       }}
       onMouseEnter={e => { if (onClick) { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = `0 10px 32px ${solidBg}77` } }}
       onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = `0 4px 20px ${solidBg}55` }}
+      onPointerDown={e => { if (onClick) e.currentTarget.style.transform = 'translateY(-1px) scale(0.98)' }}
+      onPointerUp={e => { if (onClick) e.currentTarget.style.transform = 'translateY(-3px)' }}
+      onFocus={e => { if (onClick) e.currentTarget.style.boxShadow = `0 10px 32px ${solidBg}77, 0 0 0 2px #fff, 0 0 0 4px ${solidBg}` }}
+      onBlur={e => { e.currentTarget.style.boxShadow = `0 4px 20px ${solidBg}55` }}
     >
       {/* Decorative circle */}
       <div style={{ position:'absolute', right:-18, top:-18, width:90, height:90, borderRadius:'50%', background:'rgba(255,255,255,.12)', pointerEvents:'none' }} />
@@ -161,13 +169,21 @@ function SemafProjeto({ projeto, onClick }) {
   return (
     <div
       onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(e) } }}
       style={{
         background: '#fff', border: `1.5px solid ${borda}`,
         borderRadius: 12, padding: '14px 16px', cursor: 'pointer',
         transition: 'all 0.18s', display: 'flex', flexDirection: 'column', gap: 6,
+        outline: 'none',
       }}
       onMouseEnter={e => { e.currentTarget.style.boxShadow = '0 6px 20px rgba(0,0,0,0.08)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
       onMouseLeave={e => { e.currentTarget.style.boxShadow = ''; e.currentTarget.style.transform = '' }}
+      onPointerDown={e => { e.currentTarget.style.transform = 'scale(0.97)' }}
+      onPointerUp={e => { e.currentTarget.style.transform = 'translateY(-1px)' }}
+      onFocus={e => { e.currentTarget.style.boxShadow = `0 0 0 2px #fff, 0 0 0 4px ${dot}` }}
+      onBlur={e => { e.currentTarget.style.boxShadow = '' }}
     >
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
         <div style={{ width: 9, height: 9, borderRadius: '50%', background: dot, flexShrink: 0, marginTop: 3, boxShadow: `0 0 0 3px ${dot}30` }} />
@@ -285,13 +301,22 @@ function PainelPersonalizar({ secoes, onChange, onClose }) {
         {SECOES_DISPONIVEIS.map(s => {
           const ativo = secoes.includes(s.id)
           return (
-            <div key={s.id} onClick={() => toggle(s.id)} style={{
-              display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
-              borderRadius: 10, cursor: 'pointer',
-              background: ativo ? '#F5F3FF' : T2.cardAlt,
-              border: `1.5px solid ${ativo ? '#C4B5FD' : T2.border}`,
-              transition: 'all 0.15s',
-            }}>
+            <div
+              key={s.id}
+              onClick={() => toggle(s.id)}
+              role="checkbox"
+              aria-checked={ativo}
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(s.id) } }}
+              className="press-feedback"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
+                borderRadius: 10, cursor: 'pointer',
+                background: ativo ? '#F5F3FF' : T2.cardAlt,
+                border: `1.5px solid ${ativo ? '#C4B5FD' : T2.border}`,
+                transition: 'all 0.15s',
+                outline: 'none',
+              }}>
               <div style={{
                 width: 20, height: 20, borderRadius: 6, flexShrink: 0,
                 background: ativo ? '#7C3AED' : '#E2E8F0',
