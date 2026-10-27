@@ -273,11 +273,11 @@ export default function Sidebar() {
               ))}
             </div>
             <div style={{ display:'flex', gap:10, marginTop:20 }}>
-              <button type="button" onClick={() => { setShowSenhaModal(false); setSenhaForm({senhaAtual:'',novaSenha:'',confirmar:''}) }}
+              <button type="button" className="press-feedback" onClick={() => { setShowSenhaModal(false); setSenhaForm({senhaAtual:'',novaSenha:'',confirmar:''}) }}
                 style={{ flex:1, padding:10, borderRadius:8, border:'1.5px solid #E2E8F0', background:'#fff', color:'#64748B', fontWeight:700, fontSize:13, cursor:'pointer' }}>
                 Cancelar
               </button>
-              <button type="submit" disabled={salvandoSenha}
+              <button type="submit" className="press-feedback" disabled={salvandoSenha}
                 style={{ flex:1, padding:10, borderRadius:8, border:'none', background:'#0284C7', color:'#fff', fontWeight:700, fontSize:13, cursor:'pointer' }}>
                 {salvandoSenha ? 'Salvando...' : 'Salvar'}
               </button>

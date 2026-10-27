@@ -61,7 +61,7 @@ export default function RelatorioFinal() {
           <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "#0F172A" }}>Relatorio Final de Projeto</h1>
           <p style={{ margin: "6px 0 0", fontSize: 13, color: "#64748B" }}>Fechamento completo com auditoria de desvios e consolidacao PAR</p>
         </div>
-        {projetoId && <button onClick={() => navigate(`/acompanhamento?projeto=${projetoId}`)} style={{ padding: "10px 18px", borderRadius: 10, border: "1px solid #E2E8F0", background: "#fff", color: "#475569", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>Voltar ao Acompanhamento</button>}
+        {projetoId && <button className="press-feedback" onClick={() => navigate(`/acompanhamento?projeto=${projetoId}`)} style={{ padding: "10px 18px", borderRadius: 10, border: "1px solid #E2E8F0", background: "#fff", color: "#475569", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>Voltar ao Acompanhamento</button>}
       </div>
 
       <div style={{ background: "#fff", borderRadius: 14, padding: "20px 24px", border: "1px solid #E2E8F0", marginBottom: 24 }}>

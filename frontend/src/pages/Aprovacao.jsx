@@ -213,7 +213,7 @@ export default function Aprovacao() {
       {/* Abas */}
       <div style={{ display: "flex", gap: 4, background: T.cardAlt, borderRadius: 10, padding: 4, width: "fit-content", border: `1px solid ${T.border}` }}>
         {[{ key: "aprovacao", label: "Aprovacao", icon: ShieldCheckIcon }, { key: "baseline", label: "Baseline PAR", icon: LockClosedIcon }].map(tab => (
-          <button key={tab.key} onClick={() => { setAba(tab.key); setSelected(null) }} style={{
+          <button className="press-feedback" key={tab.key} onClick={() => { setAba(tab.key); setSelected(null) }} style={{
             padding: "8px 20px", borderRadius: 8, border: "none", cursor: "pointer", fontWeight: 700, fontSize: 13,
             background: aba === tab.key ? T.card : "transparent",
             color: aba === tab.key ? "#7C3AED" : T.text2,
@@ -228,7 +228,7 @@ export default function Aprovacao() {
       {/* Filtros */}
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
         {SETORES_PAR.map(s => (
-          <button key={s} onClick={() => setFiltroSetor(filtroSetor === s ? "" : s)}
+          <button className="press-feedback" key={s} onClick={() => setFiltroSetor(filtroSetor === s ? "" : s)}
             style={{ padding: "5px 14px", borderRadius: 20, border: `1.5px solid ${filtroSetor === s ? "#818cf8" : "rgba(255,255,255,0.1)"}`, background: filtroSetor === s ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.04)", color: filtroSetor === s ? "#a5b4fc" : "#94a3b8", fontWeight: 600, fontSize: 12, cursor: "pointer" }}>
             {s}
           </button>
@@ -236,7 +236,7 @@ export default function Aprovacao() {
         <input value={filtroBusca} onChange={e => setFiltroBusca(e.target.value)} placeholder="Buscar projeto..."
           style={{ padding: "6px 14px", borderRadius: 20, border: `1.5px solid ${T.border}`, background: T.inputBg, color: T.text1, fontSize: 12, fontFamily: "inherit", outline: "none", width: 180 }} />
         {(filtroSetor || filtroBusca) && (
-          <button onClick={() => { setFiltroSetor(""); setFiltroBusca("") }}
+          <button className="press-feedback" onClick={() => { setFiltroSetor(""); setFiltroBusca("") }}
             style={{ padding: "5px 14px", borderRadius: 20, border: "1.5px solid rgba(239,68,68,0.3)", background: "rgba(239,68,68,0.08)", color: "#f87171", fontWeight: 600, fontSize: 12, cursor: "pointer" }}>
             Limpar
           </button>
@@ -259,10 +259,14 @@ export default function Aprovacao() {
                   try { const dj = JSON.parse(p.Dados_JSON || '{}'); temRessalva = !!dj.temRessalva } catch {}
                   return (
                   <div key={p.ID} onClick={() => { setSelected(p); setSuccessMsg(""); setJustificativa("") }}
+                    role="option"
+                    aria-selected={selected?.ID === p.ID}
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(p); setSuccessMsg(""); setJustificativa("") } }}
                     style={{ padding: "12px 14px", borderRadius: 10, marginBottom: 6, cursor: "pointer",
                       background: selected?.ID === p.ID ? (isDark ? "rgba(99,102,241,0.2)" : "rgba(99,102,241,0.08)") : T.cardAlt,
                       border: `1px solid ${selected?.ID === p.ID ? "rgba(99,102,241,0.5)" : temRessalva ? "#FECACA" : T.border}`,
-                      transition: "all 0.18s" }}>
+                      transition: "all 0.18s", outline: "none" }}>
                     <div style={{ fontWeight: 700, fontSize: 13, color: T.text1 }}>{p.Nome_Projeto || p.ID_Projeto}</div>
                     <div style={{ fontSize: 11, color: T.text2, marginTop: 2 }}>{p.Resp_Planejamento} · {p.Setor}</div>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4, flexWrap: "wrap" }}>
@@ -562,11 +566,11 @@ export default function Aprovacao() {
                       <textarea value={justificativa} onChange={e => setJustificativa(e.target.value)} rows={3}
                         style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: `1px solid ${T.border}`, background: T.inputBg, color: T.text1, fontSize: 13, fontFamily: "inherit", resize: "none", outline: "none", boxSizing: "border-box" }} />
                       <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 12 }}>
-                        <button onClick={() => setModalRejeitar({ open: true, justificativa: "" })} disabled={actionLoading}
+                        <button className="press-feedback" onClick={() => setModalRejeitar({ open: true, justificativa: "" })} disabled={actionLoading}
                           style={{ padding: "10px 20px", borderRadius: 10, border: "1.5px solid #EF4444", background: "transparent", color: "#EF4444", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
                           Rejeitar
                         </button>
-                        <button onClick={() => acao("aprovar")} disabled={actionLoading || (!tercOk && !justBypass)}
+                        <button className="press-feedback" onClick={() => acao("aprovar")} disabled={actionLoading || (!tercOk && !justBypass)}
                           style={{ padding: "10px 24px", borderRadius: 10, border: "none", background: "linear-gradient(135deg,#4F46E5,#7C3AED)", color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
                           {actionLoading ? "Processando..." : "✓ Aprovar Planejamento"}
                         </button>
@@ -593,10 +597,14 @@ export default function Aprovacao() {
               <div style={{ padding: "8px 12px" }}>
                 {aprovados.map(p => (
                   <div key={p.ID} onClick={() => { setSelected(p); setBaselineMsg("") }}
+                    role="option"
+                    aria-selected={selected?.ID === p.ID}
+                    tabIndex={0}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(p); setBaselineMsg("") } }}
                     style={{ padding: "12px 14px", borderRadius: 10, marginBottom: 6, cursor: "pointer",
                       background: selected?.ID === p.ID ? (isDark ? "rgba(99,102,241,0.2)" : "rgba(99,102,241,0.08)") : T.cardAlt,
                       border: `1px solid ${selected?.ID === p.ID ? "rgba(99,102,241,0.5)" : T.border}`,
-                      transition: "all 0.18s" }}>
+                      transition: "all 0.18s", outline: "none" }}>
                     <div style={{ fontWeight: 700, fontSize: 13, color: T.text1 }}>{p.Nome_Projeto || p.ID_Projeto}</div>
                     <div style={{ fontSize: 11, color: T.text2, marginTop: 2 }}>{p.Setor}</div>
                     <div style={{ fontSize: 12, fontWeight: 700, color: "#15803D", marginTop: 4 }}>{fmt(parseBR(p.Valor_Contrato))}</div>
@@ -624,7 +632,7 @@ export default function Aprovacao() {
                     <div style={{ fontSize: 12, fontWeight: 700, color: "#64748B", marginBottom: 10, textTransform: "uppercase", letterSpacing: 1 }}>Histórico de Versões</div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                       {historicoBaselines.map(b => (
-                        <button key={b.versao} onClick={() => setVersaoViewing(versaoViewing?.versao === b.versao ? null : b)}
+                        <button className="press-feedback" key={b.versao} onClick={() => setVersaoViewing(versaoViewing?.versao === b.versao ? null : b)}
                           style={{ textAlign: "left", padding: "10px 14px", borderRadius: 10, border: `1.5px solid ${versaoViewing?.versao === b.versao ? "rgba(99,102,241,0.6)" : "rgba(255,255,255,0.08)"}`, background: versaoViewing?.versao === b.versao ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.03)", cursor: "pointer", transition: "all 0.15s" }}>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                             <span style={{ fontWeight: 700, fontSize: 13, color: versaoViewing?.versao === b.versao ? "#a78bfa" : "#94a3b8" }}>
@@ -637,7 +645,7 @@ export default function Aprovacao() {
                       ))}
                       {/* Versão atual/corrente */}
                       {baselineInfo && (
-                        <button onClick={() => setVersaoViewing(versaoViewing?.versao === baselineInfo.versao ? null : baselineInfo)}
+                        <button className="press-feedback" onClick={() => setVersaoViewing(versaoViewing?.versao === baselineInfo.versao ? null : baselineInfo)}
                           style={{ textAlign: "left", padding: "10px 14px", borderRadius: 10, border: `1.5px solid ${versaoViewing?.versao === baselineInfo.versao ? "#4F46E5" : "rgba(99,102,241,0.35)"}`, background: versaoViewing?.versao === baselineInfo.versao ? "rgba(99,102,241,0.2)" : "rgba(99,102,241,0.07)", cursor: "pointer", transition: "all 0.15s" }}>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                             <span style={{ fontWeight: 700, fontSize: 13, color: "#a78bfa" }}>
@@ -666,7 +674,7 @@ export default function Aprovacao() {
                           Travado em {versaoViewing.travadoEm ? new Date(versaoViewing.travadoEm).toLocaleDateString("pt-BR") : "—"} por {versaoViewing.travadoPor || "—"}
                         </span>
                       </div>
-                      <button onClick={() => gerarPDFBaseline(versaoViewing, selected?.Nome_Projeto)}
+                      <button className="press-feedback" onClick={() => gerarPDFBaseline(versaoViewing, selected?.Nome_Projeto)}
                         style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", borderRadius: 8, border: "none", background: "#7C3AED", color: "#fff", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>
                         <DocumentArrowDownIcon style={{ width: 14, height: 14 }} /> PDF
                       </button>
@@ -778,7 +786,7 @@ export default function Aprovacao() {
                   <div style={{ padding: "10px 14px", borderRadius: 8, marginBottom: 14, background: "#F0FDF4", border: "1px solid #86EFAC", color: "#15803D", fontWeight: 600, fontSize: 13 }}>{baselineMsg}</div>
                 )}
 
-                <button onClick={travarBaseline} disabled={baselineLoading}
+                <button className="press-feedback" onClick={travarBaseline} disabled={baselineLoading}
                   style={{ width: "100%", padding: "12px 0", borderRadius: 10, border: "none", background: "linear-gradient(135deg,#4F46E5,#7C3AED)", color: "#fff", fontWeight: 800, fontSize: 14, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                   <LockClosedIcon style={{ width: 16, height: 16 }} />
                   {baselineTravado ? `Travar Nova Versão (v${(baselineInfo?.versao || 1) + 1})` : "Travar Baseline (Versão 1)"}
@@ -811,11 +819,11 @@ export default function Aprovacao() {
             <div style={{ fontSize: 12, color: "#EF4444", marginTop: 4 }}>Justificativa obrigatória para rejeitar.</div>
           )}
           <div style={{ display: "flex", gap: 10, justifyContent: "flex-end", marginTop: 18 }}>
-            <button onClick={() => setModalRejeitar({ open: false, justificativa: "" })}
+            <button className="press-feedback" onClick={() => setModalRejeitar({ open: false, justificativa: "" })}
               style={{ padding: "9px 18px", borderRadius: 9, border: `1px solid ${T.border}`, background: "transparent", color: T.text2, fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
               Cancelar
             </button>
-            <button
+            <button className="press-feedback"
               disabled={!modalRejeitar.justificativa.trim() || actionLoading}
               onClick={async () => {
                 if (!selected) return

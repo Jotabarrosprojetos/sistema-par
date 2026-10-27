@@ -160,7 +160,7 @@ export default function Relatorios() {
       {/* ── Tabs ── */}
       <div className="flex gap-1 bg-white p-1 rounded-xl w-fit border border-slate-200 shadow-sm flex-wrap">
         {TABS.map((t) => (
-          <button
+          <button className="press-feedback"
             key={t.id}
             onClick={() => {
               setActiveTab(t.id)
@@ -193,11 +193,11 @@ export default function Relatorios() {
               </select>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-100">
-              <button onClick={handleExportExcel} disabled={!projetoSel} className="btn-primary flex-1 flex items-center justify-center gap-2">
+              <button className="press-feedback" onClick={handleExportExcel} disabled={!projetoSel} className="btn-primary flex-1 flex items-center justify-center gap-2">
                 <TableCellsIcon className="w-5 h-5" />
                 Gerar Excel (Gestão)
               </button>
-              <button onClick={handleExportPDF} disabled={!projetoSel} className="bg-white hover:bg-slate-50 text-par-600 font-bold py-2 px-6 rounded-xl border border-slate-200 flex-1 flex items-center justify-center gap-2 transition-all">
+              <button className="press-feedback" onClick={handleExportPDF} disabled={!projetoSel} className="bg-white hover:bg-slate-50 text-par-600 font-bold py-2 px-6 rounded-xl border border-slate-200 flex-1 flex items-center justify-center gap-2 transition-all">
                 <DocumentArrowDownIcon className="w-5 h-5" />
                 Gerar PDF (Apres.)
               </button>
@@ -220,16 +220,16 @@ export default function Relatorios() {
               </p>
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <button onClick={loadAudit} disabled={loadingAudit} className="btn-secondary flex items-center gap-2">
+              <button className="press-feedback" onClick={loadAudit} disabled={loadingAudit} className="btn-secondary flex items-center gap-2">
                 <ClipboardDocumentCheckIcon className="w-4 h-4" />
                 {loadingAudit ? 'Processando...' : 'Rodar Auditoria'}
               </button>
               {auditData && <>
-                <button onClick={handleDownloadAuditExcel} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 10, border: '1.5px solid #BBF7D0', background: '#F0FDF4', color: '#15803D', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
+                <button className="press-feedback" onClick={handleDownloadAuditExcel} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px', borderRadius: 10, border: '1.5px solid #BBF7D0', background: '#F0FDF4', color: '#15803D', fontWeight: 700, fontSize: 13, cursor: 'pointer' }}>
                   <TableCellsIcon className="w-4 h-4" />
                   Excel
                 </button>
-                <button onClick={handleDownloadAuditPDF} className="btn-primary flex items-center gap-2">
+                <button className="press-feedback" onClick={handleDownloadAuditPDF} className="btn-primary flex items-center gap-2">
                   <DocumentArrowDownIcon className="w-4 h-4" />
                   PDF
                 </button>
@@ -248,7 +248,7 @@ export default function Relatorios() {
               <ExclamationTriangleIcon className="w-12 h-12 mx-auto mb-3" style={{ color: '#DC2626' }} />
               <p style={{ fontSize: 16, fontWeight: 700, color: '#DC2626' }}>Falha na Análise</p>
               <p style={{ fontSize: 13, color: '#7F1D1D', marginTop: 6 }}>{auditError}</p>
-              <button onClick={loadAudit} className="btn-secondary mt-6">Tentar novamente</button>
+              <button className="press-feedback" onClick={loadAudit} className="btn-secondary mt-6">Tentar novamente</button>
             </div>
           ) : auditData ? (
             <>
@@ -292,7 +292,7 @@ export default function Relatorios() {
                 </select>
                 <div style={{ display: 'flex', gap: 6 }}>
                   {[{ id: 'nome', label: 'A-Z' }, { id: 'data', label: 'Data' }, { id: 'perc', label: '%' }].map(s => (
-                    <button key={s.id} onClick={() => setSortBy(s.id)} style={{ padding: '5px 12px', borderRadius: 8, border: '1.5px solid', borderColor: sortBy === s.id ? '#7C3AED' : '#E2E8F0', background: sortBy === s.id ? '#EDE9FE' : '#fff', color: sortBy === s.id ? '#7C3AED' : '#475569', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>
+                    <button className="press-feedback" key={s.id} onClick={() => setSortBy(s.id)} style={{ padding: '5px 12px', borderRadius: 8, border: '1.5px solid', borderColor: sortBy === s.id ? '#7C3AED' : '#E2E8F0', background: sortBy === s.id ? '#EDE9FE' : '#fff', color: sortBy === s.id ? '#7C3AED' : '#475569', fontWeight: 700, fontSize: 12, cursor: 'pointer' }}>
                       {s.label}
                     </button>
                   ))}
@@ -302,7 +302,7 @@ export default function Relatorios() {
                   Ocultar Concluídas
                 </label>
                 {(filtroCliente || filtroSetor || filtroStatus) && (
-                  <button onClick={() => { setFiltroCliente(''); setFiltroSetor(''); setFiltroStatus('') }} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 8, border: '1.5px solid #FECACA', background: '#FEF2F2', color: '#DC2626', fontWeight: 700, fontSize: 11, cursor: 'pointer' }}>
+                  <button className="press-feedback" onClick={() => { setFiltroCliente(''); setFiltroSetor(''); setFiltroStatus('') }} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '5px 10px', borderRadius: 8, border: '1.5px solid #FECACA', background: '#FEF2F2', color: '#DC2626', fontWeight: 700, fontSize: 11, cursor: 'pointer' }}>
                     <XMarkIcon style={{ width: 13, height: 13 }} />
                     Limpar filtros
                   </button>
@@ -411,7 +411,7 @@ export default function Relatorios() {
               <ClipboardDocumentCheckIcon style={{ width: 56, height: 56, color: '#CBD5E1', margin: '0 auto 16px' }} />
               <p style={{ fontSize: 15, fontWeight: 800, color: '#0F172A', marginBottom: 6 }}>Auditoria de Projetos</p>
               <p style={{ fontSize: 13, color: '#94A3B8' }}>Clique no botão para analisar a saúde do portfólio</p>
-              <button onClick={loadAudit} className="btn-primary mt-8">Iniciar Análise</button>
+              <button className="press-feedback" onClick={loadAudit} className="btn-primary mt-8">Iniciar Análise</button>
             </div>
           )}
         </div>
@@ -422,7 +422,7 @@ export default function Relatorios() {
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden slide-in-right">
           <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between">
             <h2 className="text-sm font-bold text-slate-900 uppercase tracking-widest">Importações ERP Opportune</h2>
-            <button onClick={loadLogs} className="text-xs text-par-600 hover:text-par-700 font-bold">Atualizar</button>
+            <button className="press-feedback" onClick={loadLogs} className="text-xs text-par-600 hover:text-par-700 font-bold">Atualizar</button>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left whitespace-nowrap">

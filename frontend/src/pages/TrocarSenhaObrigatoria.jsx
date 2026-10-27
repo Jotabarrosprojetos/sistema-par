@@ -109,7 +109,7 @@ export default function TrocarSenhaObrigatoria() {
           ))}
         </div>
 
-        <button
+        <button className="press-feedback"
           type="submit"
           disabled={salvando}
           style={{

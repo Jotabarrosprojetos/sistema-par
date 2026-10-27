@@ -103,6 +103,7 @@ export default function Header() {
         {/* Bell */}
         <div style={{ position: 'relative' }} ref={dropdownRef}>
           <button
+            className="press-feedback"
             onClick={() => setShowAlerts(!showAlerts)}
             style={{ ...btnStyle, position: 'relative' }}
             title="Alertas"
@@ -138,7 +139,7 @@ export default function Header() {
                     </span>
                   )}
                 </div>
-                <button onClick={() => setShowAlerts(false)} style={{ ...btnStyle, width: 28, height: 28 }}>
+                <button className="press-feedback" onClick={() => setShowAlerts(false)} style={{ ...btnStyle, width: 28, height: 28 }}>
                   <XMarkIcon style={{ width: 16, height: 16 }} />
                 </button>
               </div>
@@ -186,6 +187,7 @@ export default function Header() {
                           </div>
                         </div>
                         <button
+                          className="press-feedback"
                           onClick={e => { e.stopPropagation(); resolveAlert(a.ID) }}
                           style={{ ...btnStyle, width: 28, height: 28 }}
                           title="Dispensar"
@@ -200,7 +202,7 @@ export default function Header() {
 
               {/* Footer */}
               <div style={{ padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid #F1F5F9' }}>
-                <button onClick={() => { navigate('/alertas'); setShowAlerts(false) }}
+                <button className="press-feedback" onClick={() => { navigate('/alertas'); setShowAlerts(false) }}
                   style={{ fontSize: 12, fontWeight: 700, color: '#00B5CC', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'inherit' }}>
                   Ver todos →
                 </button>
@@ -214,6 +216,7 @@ export default function Header() {
 
         {/* Dark mode toggle */}
         <button
+          className="press-feedback"
           onClick={toggleTheme}
           title={isDark ? 'Modo claro' : 'Modo escuro'}
           style={{
@@ -237,6 +240,7 @@ export default function Header() {
 
         {/* Settings */}
         <button
+          className="press-feedback"
           onClick={() => navigate('/configuracoes')}
           style={btnStyle}
           title="Configurações"
@@ -251,6 +255,7 @@ export default function Header() {
 
         {/* Logout */}
         <button
+          className="press-feedback"
           onClick={handleLogout}
           title="Sair"
           style={{

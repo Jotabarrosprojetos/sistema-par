@@ -444,7 +444,7 @@ export default function RelatoriosGerenciais() {
         {SETORES_OPCOES.map(s => {
           const ativo = value === s
           return (
-            <button key={s} onClick={() => onChange(s)} style={{
+            <button className="press-feedback" key={s} onClick={() => onChange(s)} style={{
               padding: '4px 12px', borderRadius: 20, border: `1.5px solid ${ativo ? cor : T.border}`,
               background: ativo ? cor : 'transparent', color: ativo ? '#fff' : T.text2,
               fontSize: 11, fontWeight: 700, cursor: 'pointer', transition: 'all .15s',
@@ -465,7 +465,7 @@ export default function RelatoriosGerenciais() {
             {df?.kpis?.qtdAprovados || 0} projetos · dados atualizados
           </span>
         )}
-        <button onClick={carregar} style={{ marginLeft: 'auto', padding: '6px 14px', borderRadius: 8, border: `1.5px solid ${T.border}`, background: T.card, color: T.text2, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+        <button className="press-feedback" onClick={carregar} style={{ marginLeft: 'auto', padding: '6px 14px', borderRadius: 8, border: `1.5px solid ${T.border}`, background: T.card, color: T.text2, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
           🔄 Atualizar
         </button>
       </div>
@@ -488,7 +488,7 @@ export default function RelatoriosGerenciais() {
               </div>
             </div>
             <SetorSelector value={setor1} onChange={setSetor1} cor="#1e4d8c" />
-            <button onClick={() => df ? rel1Setores(df, setor1) : toast.error('Dados ainda carregando')}
+            <button className="press-feedback" onClick={() => df ? rel1Setores(df, setor1) : toast.error('Dados ainda carregando')}
               style={{ alignSelf:'flex-start', padding:'9px 20px', borderRadius:9, border:'none', background:'#1e4d8c', color:'#fff', fontWeight:700, fontSize:13, cursor:'pointer', display:'flex', alignItems:'center', gap:8, boxShadow:'0 2px 10px rgba(30,77,140,.35)' }}>
               <DocumentChartBarIcon style={{ width:15, height:15 }} /> Gerar PDF
             </button>
@@ -507,7 +507,7 @@ export default function RelatoriosGerenciais() {
               </div>
             </div>
             <SetorSelector value={setor2} onChange={setSetor2} cor="#7C3AED" />
-            <button onClick={() => br?.length ? rel2PlanejaXReal(br, setor2) : toast.error('Dados ainda carregando')}
+            <button className="press-feedback" onClick={() => br?.length ? rel2PlanejaXReal(br, setor2) : toast.error('Dados ainda carregando')}
               style={{ alignSelf:'flex-start', padding:'9px 20px', borderRadius:9, border:'none', background:'#7C3AED', color:'#fff', fontWeight:700, fontSize:13, cursor:'pointer', display:'flex', alignItems:'center', gap:8, boxShadow:'0 2px 10px rgba(124,58,237,.35)' }}>
               <DocumentChartBarIcon style={{ width:15, height:15 }} /> Gerar PDF
             </button>
@@ -526,7 +526,7 @@ export default function RelatoriosGerenciais() {
                 <div style={{ fontSize: 12, color: T.text2, lineHeight: 1.6 }}>Histórico dos últimos 6 meses de recebimentos realizados e previstos, mais projeção de caixa 90 dias.</div>
               </div>
             </div>
-            <button onClick={() => df ? rel3Mensal(df) : toast.error('Dados ainda carregando')}
+            <button className="press-feedback" onClick={() => df ? rel3Mensal(df) : toast.error('Dados ainda carregando')}
               style={{ alignSelf:'flex-start', padding:'9px 20px', borderRadius:9, border:'none', background:'#0891B2', color:'#fff', fontWeight:700, fontSize:13, cursor:'pointer', display:'flex', alignItems:'center', gap:8, boxShadow:'0 2px 10px rgba(8,145,178,.35)' }}>
               <DocumentChartBarIcon style={{ width:15, height:15 }} /> Gerar PDF
             </button>
@@ -545,7 +545,7 @@ export default function RelatoriosGerenciais() {
               </div>
             </div>
             <SetorSelector value={setor4} onChange={setSetor4} cor="#15803D" />
-            <button onClick={() => br?.length ? rel4Comparativo(br, setor4) : toast.error('Dados ainda carregando')}
+            <button className="press-feedback" onClick={() => br?.length ? rel4Comparativo(br, setor4) : toast.error('Dados ainda carregando')}
               style={{ alignSelf:'flex-start', padding:'9px 20px', borderRadius:9, border:'none', background:'#15803D', color:'#fff', fontWeight:700, fontSize:13, cursor:'pointer', display:'flex', alignItems:'center', gap:8, boxShadow:'0 2px 10px rgba(21,128,61,.35)' }}>
               <DocumentChartBarIcon style={{ width:15, height:15 }} /> Gerar PDF
             </button>

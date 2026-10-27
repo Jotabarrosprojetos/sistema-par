@@ -142,7 +142,7 @@ export default function Configuracoes() {
         <Section title="Gestão de Usuários" icon={Users}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
             <span style={{ fontSize: 13, color: T.text2 }}>{usuarios.length} usuário(s) cadastrado(s)</span>
-            <button onClick={() => setMostrarFormUser(!mostrarFormUser)} style={btnPrimary}>
+            <button className="press-feedback" onClick={() => setMostrarFormUser(!mostrarFormUser)} style={btnPrimary}>
               {mostrarFormUser ? "Cancelar" : "+ Novo Usuário"}
             </button>
           </div>
@@ -157,7 +157,7 @@ export default function Configuracoes() {
                   {PERFIS.map(p => <option key={p} value={p}>{p}</option>)}
                 </select>
               </div>
-              <button type="submit" disabled={salvandoUser} style={{ ...btnPrimary, width: "100%", justifyContent: "center" }}>
+              <button className="press-feedback" type="submit" disabled={salvandoUser} style={{ ...btnPrimary, width: "100%", justifyContent: "center" }}>
                 {salvandoUser ? "Criando..." : "Criar Usuário"}
               </button>
             </form>
@@ -174,10 +174,10 @@ export default function Configuracoes() {
                   <span style={{ fontSize: 11, fontWeight: 700, padding: "3px 8px", borderRadius: 6, background: u.ativo === "true" ? "#DCFCE7" : "#FEE2E2", color: u.ativo === "true" ? "#15803D" : "#DC2626" }}>
                     {u.ativo === "true" ? "Ativo" : "Inativo"}
                   </span>
-                  <button onClick={() => toggleAtivo(u)} style={{ fontSize: 11, padding: "5px 12px", borderRadius: 6, border: `1.5px solid ${T.border}`, background: T.card, color: T.text2, cursor: "pointer", fontWeight: 600 }}>
+                  <button className="press-feedback" onClick={() => toggleAtivo(u)} style={{ fontSize: 11, padding: "5px 12px", borderRadius: 6, border: `1.5px solid ${T.border}`, background: T.card, color: T.text2, cursor: "pointer", fontWeight: 600 }}>
                     {u.ativo === "true" ? "Desativar" : "Ativar"}
                   </button>
-                  <button onClick={() => excluirUsuario(u)} title="Excluir usuário" style={{ fontSize: 11, padding: "5px 8px", borderRadius: 6, border: "1.5px solid #FCA5A5", background: "#FFF1F2", color: "#DC2626", cursor: "pointer", display: "flex", alignItems: "center" }}>
+                  <button className="press-feedback" onClick={() => excluirUsuario(u)} title="Excluir usuário" style={{ fontSize: 11, padding: "5px 8px", borderRadius: 6, border: "1.5px solid #FCA5A5", background: "#FFF1F2", color: "#DC2626", cursor: "pointer", display: "flex", alignItems: "center" }}>
                     <Trash2 size={13} />
                   </button>
                 </div>
@@ -194,7 +194,7 @@ export default function Configuracoes() {
         <InfoRow label="Sincronização automática" value="A cada 15 minutos" status="ok" />
         <InfoRow label="Time ID" value="36936702" />
         <div style={{ marginTop: 16 }}>
-          <button onClick={syncClickUp} disabled={syncing} style={btnPrimary}>
+          <button className="press-feedback" onClick={syncClickUp} disabled={syncing} style={btnPrimary}>
             <RefreshCw size={16} style={{ animation: syncing ? "spin 1s linear infinite" : "none" }} />
             {syncing ? "Sincronizando..." : "Sincronizar ClickUp agora"}
           </button>
@@ -208,7 +208,7 @@ export default function Configuracoes() {
         <InfoRow label="Sincronização automática" value="A cada 2 horas" status="ok" />
         <InfoRow label="Endpoints" value="/contas-receber e /contas-pagar" />
         <div style={{ marginTop: 16 }}>
-          <button onClick={syncOPP} disabled={syncingVH} style={btnSecondary}>
+          <button className="press-feedback" onClick={syncOPP} disabled={syncingVH} style={btnSecondary}>
             <RefreshCw size={16} style={{ animation: syncingVH ? "spin 1s linear infinite" : "none" }} />
             {syncingVH ? "Sincronizando..." : "Sincronizar OPP agora"}
           </button>

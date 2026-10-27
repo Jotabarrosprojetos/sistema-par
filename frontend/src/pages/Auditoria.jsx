@@ -131,7 +131,7 @@ export default function Auditoria() {
           <Search size={14} color={T.text3} />
           <input value={busca} onChange={e => setBusca(e.target.value)} placeholder="Buscar projeto ou registro..."
             style={{ border: "none", background: "transparent", outline: "none", fontSize: 12, flex: 1, color: T.text1, fontFamily: "inherit" }} />
-          {busca && <button onClick={() => setBusca("")} style={{ background: "none", border: "none", cursor: "pointer", color: T.text3, display: "flex" }}><X size={14} /></button>}
+          {busca && <button className="press-feedback" onClick={() => setBusca("")} style={{ background: "none", border: "none", cursor: "pointer", color: T.text3, display: "flex" }}><X size={14} /></button>}
         </div>
 
         {/* Tabela */}
@@ -156,7 +156,7 @@ export default function Auditoria() {
         </div>
 
         {temFiltro && (
-          <button onClick={limpar} style={{ padding: "5px 12px", borderRadius: 20, border: "1.5px solid #FCA5A5", background: "#FEF2F2", color: "#DC2626", fontWeight: 600, fontSize: 12, cursor: "pointer" }}>
+          <button className="press-feedback" onClick={limpar} style={{ padding: "5px 12px", borderRadius: 20, border: "1.5px solid #FCA5A5", background: "#FEF2F2", color: "#DC2626", fontWeight: 600, fontSize: 12, cursor: "pointer" }}>
             Limpar
           </button>
         )}
@@ -180,7 +180,7 @@ export default function Auditoria() {
 
           return (
             <div key={r.ID_Auditoria} style={{ background: T.card, borderRadius: 10, border: `1px solid ${expandido ? "#7C3AED" : T.border}`, overflow: "hidden" }}>
-              <button
+              <button className="press-feedback"
                 onClick={() => temDiff && setAberto(expandido ? null : r.ID_Auditoria)}
                 style={{ width: "100%", display: "grid", gridTemplateColumns: "auto 1fr auto auto auto", gap: 12, alignItems: "center", padding: "12px 16px", background: "transparent", border: "none", cursor: temDiff ? "pointer" : "default", textAlign: "left" }}>
                 {temDiff
@@ -223,14 +223,14 @@ export default function Auditoria() {
       {/* Paginação */}
       {total > POR_PAGINA && (
         <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 24 }}>
-          <button onClick={() => setPagina(p => Math.max(0, p - 1))} disabled={pagina === 0}
+          <button className="press-feedback" onClick={() => setPagina(p => Math.max(0, p - 1))} disabled={pagina === 0}
             style={{ padding: "6px 16px", borderRadius: 8, border: `1px solid ${T.border}`, background: T.card, color: pagina === 0 ? T.text3 : T.text1, cursor: pagina === 0 ? "not-allowed" : "pointer", fontWeight: 600, fontSize: 13 }}>
             ← Anterior
           </button>
           <span style={{ padding: "6px 12px", fontSize: 13, color: T.text2 }}>
             Página {pagina + 1} de {Math.ceil(total / POR_PAGINA)}
           </span>
-          <button onClick={() => setPagina(p => p + 1)} disabled={(pagina + 1) * POR_PAGINA >= total}
+          <button className="press-feedback" onClick={() => setPagina(p => p + 1)} disabled={(pagina + 1) * POR_PAGINA >= total}
             style={{ padding: "6px 16px", borderRadius: 8, border: `1px solid ${T.border}`, background: T.card, color: (pagina + 1) * POR_PAGINA >= total ? T.text3 : T.text1, cursor: (pagina + 1) * POR_PAGINA >= total ? "not-allowed" : "pointer", fontWeight: 600, fontSize: 13 }}>
             Próxima →
           </button>

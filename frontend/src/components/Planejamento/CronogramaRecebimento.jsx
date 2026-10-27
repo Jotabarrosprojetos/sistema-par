@@ -91,7 +91,7 @@ export default function CronogramaRecebimento({ control, register, errors, watch
               <button
                 type="button"
                 onClick={() => remove(index)}
-                className="p-2 text-red-500 hover:text-red-400 hover:bg-red-500/20 rounded-xl transition-all"
+                className="p-2 text-red-500 hover:text-red-400 hover:bg-red-500/20 rounded-xl transition-all active:scale-90"
                 title="Remover"
               >
                 <TrashIcon className="w-5 h-5" />

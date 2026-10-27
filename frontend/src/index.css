@@ -262,6 +262,7 @@ select option { background: #fff; color: var(--text); }
   background: rgba(0,181,204,0.06);
   color: var(--cyan);
 }
+.btn-add:active { transform: scale(0.98); }
 
 /* ── Foco (teclado) — só aparece em navegação por teclado, não em clique de mouse ── */
 .btn-primary:focus-visible,

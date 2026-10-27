@@ -241,11 +241,11 @@ export default function DashboardFinanceiro() {
         <span style={{ fontWeight: 900, fontSize: 18, color: T.text1, textTransform: "uppercase", letterSpacing: "0.06em", flex: 1 }}>
           Dashboard Financeiro
         </span>
-        <button onClick={() => gerarRelatorio(dados)}
+        <button className="press-feedback" onClick={() => gerarRelatorio(dados)}
           style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 8, border: "1.5px solid #C4B5FD", background: "#F5F3FF", color: "#7C3AED", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
           <Download size={14} /> Gerar Relatório PDF
         </button>
-        <button onClick={carregar}
+        <button className="press-feedback" onClick={carregar}
           style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 8, border: `1.5px solid ${T.border}`, background: T.card, color: T.text2, fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
           <RefreshCw size={14} /> Atualizar
         </button>

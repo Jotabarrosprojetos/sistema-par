@@ -55,7 +55,7 @@ function ErroModal({ projeto, onClose }) {
             <div style={{ fontSize: 14, fontWeight: 700, color: "#0F172A", marginTop: 2 }}>{projeto.Nome}</div>
             {projeto.Cliente && <div style={{ fontSize: 12, color: "#94A3B8" }}>{projeto.Cliente}</div>}
           </div>
-          <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#94A3B8", fontSize: 18, lineHeight: 1 }}>✕</button>
+          <button className="press-feedback" onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", color: "#94A3B8", fontSize: 18, lineHeight: 1 }}>✕</button>
         </div>
         <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
           {(projeto.Erros || []).map((e, i) => (
@@ -192,7 +192,7 @@ export default function ChecklistIntegridade() {
       {/* Abas */}
       <div style={{ display: "flex", gap: 4, background: "#F1F5F9", borderRadius: 10, padding: 4, width: "fit-content", marginBottom: 24 }}>
         {[{ key: "checklist", label: "Checklist de Integridade" }, { key: "auditoria", label: "Auditoria do Portfólio" }].map(t => (
-          <button key={t.key} onClick={() => setAba(t.key)} style={{ padding: "8px 20px", borderRadius: 8, border: "none", cursor: "pointer", fontWeight: 700, fontSize: 13, background: aba === t.key ? "#fff" : "transparent", color: aba === t.key ? "#0F172A" : "#64748B", boxShadow: aba === t.key ? "0 1px 4px rgba(0,0,0,0.08)" : "none", transition: "all 0.18s" }}>
+          <button className="press-feedback" key={t.key} onClick={() => setAba(t.key)} style={{ padding: "8px 20px", borderRadius: 8, border: "none", cursor: "pointer", fontWeight: 700, fontSize: 13, background: aba === t.key ? "#fff" : "transparent", color: aba === t.key ? "#0F172A" : "#64748B", boxShadow: aba === t.key ? "0 1px 4px rgba(0,0,0,0.08)" : "none", transition: "all 0.18s" }}>
             {t.label}
           </button>
         ))}
@@ -209,16 +209,16 @@ export default function ChecklistIntegridade() {
               {auditData && <p style={{ fontSize: 12, color: "#94A3B8", margin: "2px 0 0" }}>Atualizado às {new Date(auditData.geradoEm).toLocaleTimeString("pt-BR")}</p>}
             </div>
             <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <button onClick={loadAudit} disabled={loadingAudit}
+              <button className="press-feedback" onClick={loadAudit} disabled={loadingAudit}
                 style={{ padding: "9px 18px", borderRadius: 8, border: "1.5px solid #E2E8F0", background: "#fff", color: "#475569", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
                 <ClipboardDocumentCheckIcon style={{ width: 15, height: 15 }} />
                 {loadingAudit ? "Processando..." : auditData ? "Rodar novamente" : "Iniciar Auditoria"}
               </button>
               {auditData && <>
-                <button onClick={downloadAuditExcel} style={{ padding: "9px 16px", borderRadius: 8, border: "1.5px solid #BBF7D0", background: "#F0FDF4", color: "#15803D", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                <button className="press-feedback" onClick={downloadAuditExcel} style={{ padding: "9px 16px", borderRadius: 8, border: "1.5px solid #BBF7D0", background: "#F0FDF4", color: "#15803D", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
                   <TableCellsIcon style={{ width: 15, height: 15 }} /> Excel
                 </button>
-                <button onClick={downloadAuditPDF} style={{ padding: "9px 16px", borderRadius: 8, border: "none", background: "#7C3AED", color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                <button className="press-feedback" onClick={downloadAuditPDF} style={{ padding: "9px 16px", borderRadius: 8, border: "none", background: "#7C3AED", color: "#fff", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
                   <DocumentArrowDownIcon style={{ width: 15, height: 15 }} /> PDF
                 </button>
               </>}
@@ -238,7 +238,7 @@ export default function ChecklistIntegridade() {
               <ExclamationTriangleIcon style={{ width: 40, height: 40, color: "#DC2626", margin: "0 auto 12px" }} />
               <p style={{ fontSize: 15, fontWeight: 700, color: "#DC2626" }}>Falha na Análise</p>
               <p style={{ fontSize: 13, color: "#7F1D1D", marginTop: 6 }}>{auditError}</p>
-              <button onClick={loadAudit} style={{ marginTop: 16, padding: "8px 20px", borderRadius: 8, border: "1.5px solid #E2E8F0", background: "#fff", color: "#475569", fontWeight: 700, cursor: "pointer" }}>Tentar novamente</button>
+              <button className="press-feedback" onClick={loadAudit} style={{ marginTop: 16, padding: "8px 20px", borderRadius: 8, border: "1.5px solid #E2E8F0", background: "#fff", color: "#475569", fontWeight: 700, cursor: "pointer" }}>Tentar novamente</button>
             </div>
           )}
 
@@ -282,7 +282,7 @@ export default function ChecklistIntegridade() {
                 ))}
                 <div style={{ display: "flex", gap: 4 }}>
                   {[{ id: "nome", l: "A-Z" }, { id: "data", l: "Data" }, { id: "perc", l: "%" }].map(s => (
-                    <button key={s.id} onClick={() => setSortBy(s.id)} style={{ padding: "5px 10px", borderRadius: 7, border: "1.5px solid", borderColor: sortBy === s.id ? "#7C3AED" : "#E2E8F0", background: sortBy === s.id ? "#EDE9FE" : "#fff", color: sortBy === s.id ? "#7C3AED" : "#475569", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>{s.l}</button>
+                    <button className="press-feedback" key={s.id} onClick={() => setSortBy(s.id)} style={{ padding: "5px 10px", borderRadius: 7, border: "1.5px solid", borderColor: sortBy === s.id ? "#7C3AED" : "#E2E8F0", background: sortBy === s.id ? "#EDE9FE" : "#fff", color: sortBy === s.id ? "#7C3AED" : "#475569", fontWeight: 700, fontSize: 12, cursor: "pointer" }}>{s.l}</button>
                   ))}
                 </div>
                 <label style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600, color: "#475569", cursor: "pointer", marginLeft: "auto" }}>
@@ -290,7 +290,7 @@ export default function ChecklistIntegridade() {
                   Ocultar concluídas
                 </label>
                 {(filtroCliente || filtroSetor || filtroStatus) && (
-                  <button onClick={() => { setFiltroCliente(""); setFiltroSetor(""); setFiltroStatus("") }} style={{ display: "flex", alignItems: "center", gap: 4, padding: "5px 10px", borderRadius: 7, border: "1.5px solid #FECACA", background: "#FEF2F2", color: "#DC2626", fontWeight: 700, fontSize: 11, cursor: "pointer" }}>
+                  <button className="press-feedback" onClick={() => { setFiltroCliente(""); setFiltroSetor(""); setFiltroStatus("") }} style={{ display: "flex", alignItems: "center", gap: 4, padding: "5px 10px", borderRadius: 7, border: "1.5px solid #FECACA", background: "#FEF2F2", color: "#DC2626", fontWeight: 700, fontSize: 11, cursor: "pointer" }}>
                     <XMarkIcon style={{ width: 12, height: 12 }} /> Limpar
                   </button>
                 )}
@@ -341,7 +341,7 @@ export default function ChecklistIntegridade() {
                             </td>
                             <td style={{ padding: "10px 14px", textAlign: "center" }}>
                               {p.Auditoria === "ERRO" ? (
-                                <button onClick={() => setErroModal(p)} style={{ fontSize: 11, fontWeight: 800, padding: "3px 10px", borderRadius: 6, background: "#FEE2E2", color: "#DC2626", border: "none", cursor: "pointer", textDecoration: "underline dotted" }} title="Clique para ver os erros">
+                                <button className="press-feedback" onClick={() => setErroModal(p)} style={{ fontSize: 11, fontWeight: 800, padding: "3px 10px", borderRadius: 6, background: "#FEE2E2", color: "#DC2626", border: "none", cursor: "pointer", textDecoration: "underline dotted" }} title="Clique para ver os erros">
                                   ERRO
                                 </button>
                               ) : (
@@ -411,7 +411,7 @@ export default function ChecklistIntegridade() {
               {/* Filtros */}
               <div style={{ background: "#fff", borderRadius: 12, padding: "14px 18px", border: "1px solid #E2E8F0", marginBottom: 16, display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                 {FILTROS_TIPO.map(f => (
-                  <button key={f} onClick={() => setFiltro(f)} style={{
+                  <button className="press-feedback" key={f} onClick={() => setFiltro(f)} style={{
                     padding: "5px 14px", borderRadius: 8, border: `1.5px solid ${filtro === f ? "#7C3AED" : "#E2E8F0"}`,
                     background: filtro === f ? "#EDE9FE" : "#F8FAFC",
                     color: filtro === f ? "#7C3AED" : "#64748B",
@@ -429,13 +429,13 @@ export default function ChecklistIntegridade() {
               <div style={{ background: "#fff", borderRadius: 14, border: "1px solid #E2E8F0", overflow: "hidden" }}>
                 {/* Controle de colunas */}
                 <div style={{ padding: "10px 16px", borderBottom: "1px solid #F1F5F9", display: "flex", justifyContent: "flex-end", position: "relative" }}>
-                  <button onClick={() => setShowColunas(!showColunas)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 7, border: "1.5px solid #E2E8F0", background: "#F8FAFC", color: "#475569", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
+                  <button className="press-feedback" onClick={() => setShowColunas(!showColunas)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 7, border: "1.5px solid #E2E8F0", background: "#F8FAFC", color: "#475569", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
                     <TableCellsIcon style={{ width: 14, height: 14 }} /> Colunas
                   </button>
                   {showColunas && (
                     <div style={{ position: "absolute", top: "100%", right: 16, zIndex: 50, background: "#fff", borderRadius: 10, border: "1px solid #E2E8F0", boxShadow: "0 8px 24px rgba(0,0,0,0.1)", padding: "8px 0", minWidth: 160 }}>
                       {COLUNAS_CHECKLIST.map(c => (
-                        <button key={c.key} onClick={() => toggleColuna(c.key)} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "7px 16px", background: "none", border: "none", cursor: "pointer", fontSize: 13, color: "#0F172A", textAlign: "left" }}>
+                        <button className="press-feedback" key={c.key} onClick={() => toggleColuna(c.key)} style={{ display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "7px 16px", background: "none", border: "none", cursor: "pointer", fontSize: 13, color: "#0F172A", textAlign: "left" }}>
                           <span style={{ width: 16, height: 16, borderRadius: 4, border: `2px solid ${col(c.key) ? "#7C3AED" : "#CBD5E1"}`, background: col(c.key) ? "#7C3AED" : "#fff", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                             {col(c.key) && <span style={{ color: "#fff", fontSize: 10, fontWeight: 900 }}>✓</span>}
                           </span>
@@ -490,7 +490,7 @@ export default function ChecklistIntegridade() {
                             </td>}
                             {col("acoes")     && <td style={{ padding: "12px 16px", whiteSpace: "nowrap" }}>
                               <div style={{ display: "flex", gap: 6 }}>
-                                <button onClick={() => navigate(`/planejamento/${p.id}`)}
+                                <button className="press-feedback" onClick={() => navigate(`/planejamento/${p.id}`)}
                                   style={{ padding: "5px 12px", borderRadius: 7, border: "1px solid #E2E8F0", background: "#EEF2FF", color: "#4338CA", fontSize: 12, fontWeight: 700, cursor: "pointer" }}>
                                   Planejamento
                                 </button>

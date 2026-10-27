@@ -78,7 +78,7 @@ export default function EquipeTecnica({ control, register, errors, watch, totais
                 />
               </div>
               <div className={`col-span-1 flex items-center justify-center ${index === 0 ? 'mb-1' : ''}`}>
-                <button type="button" onClick={() => remove(index)} className="p-2 text-red-500 hover:text-red-400 hover:bg-red-500/20 rounded-xl transition-all">
+                <button type="button" onClick={() => remove(index)} className="p-2 text-red-500 hover:text-red-400 hover:bg-red-500/20 rounded-xl transition-all active:scale-90">
                   <TrashIcon className="w-5 h-5" />
                 </button>
               </div>

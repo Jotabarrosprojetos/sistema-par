@@ -154,7 +154,7 @@ export default function Alertas() {
             <span className="text-sm font-bold text-blue-700">{infoCount} Info</span>
           </div>
           {user?.perfil === 'Admin' && alerts.length > 0 && (
-            <button onClick={handleLimpar} disabled={limpando}
+            <button className="press-feedback" onClick={handleLimpar} disabled={limpando}
               className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold border transition-all"
               style={{ background: limpando ? '#F1F5F9' : '#FEF2F2', border: '1px solid #FECACA', color: '#DC2626', cursor: limpando ? 'not-allowed' : 'pointer' }}
             >
@@ -171,7 +171,7 @@ export default function Alertas() {
         <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
           <span style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8' }}>NIVEL:</span>
           {FILTROS.map(f => (
-            <button key={f} onClick={() => setFiltro(f)} style={{
+            <button className="press-feedback" key={f} onClick={() => setFiltro(f)} style={{
               padding: '5px 14px', borderRadius: 8, border: '1.5px solid',
               borderColor: filtro === f ? '#7C3AED' : '#E2E8F0',
               background: filtro === f ? '#EDE9FE' : '#F8FAFC',
@@ -187,7 +187,7 @@ export default function Alertas() {
           {/* Agrupar por toggle */}
           <div style={{ display: 'flex', background: '#F1F5F9', borderRadius: 8, padding: 3, gap: 2 }}>
             {[['tipo', 'Por Tipo'], ['setor', 'Por Setor']].map(([v, lbl]) => (
-              <button key={v} onClick={() => setAgruparPor(v)} style={{
+              <button className="press-feedback" key={v} onClick={() => setAgruparPor(v)} style={{
                 padding: '4px 12px', borderRadius: 6, border: 'none', cursor: 'pointer', fontSize: 12, fontWeight: 700,
                 background: agruparPor === v ? '#fff' : 'transparent',
                 color: agruparPor === v ? '#7C3AED' : '#64748B',
@@ -201,7 +201,7 @@ export default function Alertas() {
         {setoresDisponiveis.length > 0 && (
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
             <span style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8' }}>SETOR:</span>
-            <button onClick={() => setFiltroSetor('')} style={{
+            <button className="press-feedback" onClick={() => setFiltroSetor('')} style={{
               padding: '4px 12px', borderRadius: 20, border: `1.5px solid ${!filtroSetor ? '#7C3AED' : '#E2E8F0'}`,
               background: !filtroSetor ? '#EDE9FE' : '#F8FAFC', color: !filtroSetor ? '#7C3AED' : '#64748B',
               fontWeight: !filtroSetor ? 700 : 600, fontSize: 12, cursor: 'pointer',
@@ -211,7 +211,7 @@ export default function Alertas() {
               const ativo = filtroSetor === s
               const count = alerts.filter(a => (a.Setor_Destino || '').split(',').map(x => x.trim()).includes(s)).length
               return (
-                <button key={s} onClick={() => setFiltroSetor(ativo ? '' : s)} style={{
+                <button className="press-feedback" key={s} onClick={() => setFiltroSetor(ativo ? '' : s)} style={{
                   padding: '4px 12px', borderRadius: 20,
                   border: `1.5px solid ${ativo ? st.color : '#E2E8F0'}`,
                   background: ativo ? st.bg : '#F8FAFC',
@@ -307,14 +307,14 @@ export default function Alertas() {
 
                         <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'stretch' }}>
                           {alerta.ID_Projeto && (
-                            <button onClick={() => navigate(`/planejamento/${alerta.ID_Projeto}`)}
+                            <button className="press-feedback" onClick={() => navigate(`/planejamento/${alerta.ID_Projeto}`)}
                               title="Abre o planejamento do projeto pra você corrigir a causa do alerta"
                               style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #C4B5FD', background: '#F5F3FF', color: '#7C3AED', fontWeight: 700, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'center' }}>
                               <ArrowRightCircleIcon className="w-4 h-4" />
                               Ver problema
                             </button>
                           )}
-                          <button onClick={() => resolveAlert(alerta.ID)}
+                          <button className="press-feedback" onClick={() => resolveAlert(alerta.ID)}
                             title="Esconde esse alerta por 30 dias. Não confirma que o problema foi corrigido — se a causa continuar valendo, o alerta volta sozinho depois desse prazo. Alertas com causa realmente corrigida já somem sozinhos, sem precisar disso."
                             style={{ padding: '6px 12px', borderRadius: 8, border: '1px solid #E2E8F0', background: '#F8FAFC', color: '#64748B', fontWeight: 700, fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4, justifyContent: 'center' }}>
                             <BellSlashIcon className="w-4 h-4" />

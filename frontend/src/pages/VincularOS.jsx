@@ -230,21 +230,21 @@ export default function VincularOS() {
           <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
             {modo === "os" ? (
               <>
-                <button onClick={corrigirMedicoes} disabled={salvando}
+                <button className="press-feedback" onClick={corrigirMedicoes} disabled={salvando}
                   style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", background: "#059669", border: "none", borderRadius: 8, color: "#fff", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
                   <Check size={14} /> Corrigir medições
                 </button>
-                <button onClick={aplicarMapeamentos} disabled={salvando}
+                <button className="press-feedback" onClick={aplicarMapeamentos} disabled={salvando}
                   style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", background: "#7C3AED", border: "none", borderRadius: 8, color: "#fff", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
                   <Database size={14} /> Aplicar mapeamentos
                 </button>
                 {projetos.filter(p => !p.nrOsOpp && p.sugestao).length > 0 && (
-                  <button onClick={autoVincularTudo} disabled={salvando}
+                  <button className="press-feedback" onClick={autoVincularTudo} disabled={salvando}
                     style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", background: "#2563EB", border: "none", borderRadius: 8, color: "#fff", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
                     <Zap size={14} /> Auto-vincular ({projetos.filter(p => !p.nrOsOpp && p.sugestao).length})
                   </button>
                 )}
-                <button onClick={carregar} disabled={loading}
+                <button className="press-feedback" onClick={carregar} disabled={loading}
                   style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", background: card, border: `1px solid ${brd}`, borderRadius: 8, color: txt, cursor: "pointer", fontSize: 13 }}>
                   <RefreshCw size={14} /> Atualizar
                 </button>
@@ -252,12 +252,12 @@ export default function VincularOS() {
             ) : (
               <>
                 {projetosCliente.filter(p => !p.idOppCliente && p.sugestao && p.sugestao.score >= 0.75).length > 0 && (
-                  <button onClick={autoVincularClientesTudo} disabled={salvando}
+                  <button className="press-feedback" onClick={autoVincularClientesTudo} disabled={salvando}
                     style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", background: "#2563EB", border: "none", borderRadius: 8, color: "#fff", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
                     <Zap size={14} /> Auto-vincular ({projetosCliente.filter(p => !p.idOppCliente && p.sugestao && p.sugestao.score >= 0.75).length})
                   </button>
                 )}
-                <button onClick={carregarClientes} disabled={loadingCliente}
+                <button className="press-feedback" onClick={carregarClientes} disabled={loadingCliente}
                   style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 14px", background: card, border: `1px solid ${brd}`, borderRadius: 8, color: txt, cursor: "pointer", fontSize: 13 }}>
                   <RefreshCw size={14} /> Atualizar
                 </button>
@@ -268,11 +268,11 @@ export default function VincularOS() {
 
         {/* Alternância de modo */}
         <div style={{ display: "flex", gap: 6, marginBottom: 20, background: card, border: `1px solid ${brd}`, borderRadius: 10, padding: 4, width: "fit-content" }}>
-          <button onClick={() => setModo("os")}
+          <button className="press-feedback" onClick={() => setModo("os")}
             style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", background: modo === "os" ? "#2563EB" : "transparent", border: "none", borderRadius: 7, color: modo === "os" ? "#fff" : txt, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
             <Link2 size={14} /> Por O.S.
           </button>
-          <button onClick={() => setModo("cliente")}
+          <button className="press-feedback" onClick={() => setModo("cliente")}
             style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", background: modo === "cliente" ? "#2563EB" : "transparent", border: "none", borderRadius: 7, color: modo === "cliente" ? "#fff" : txt, cursor: "pointer", fontSize: 13, fontWeight: 600 }}>
             <Building2 size={14} /> Por Cliente
           </button>
@@ -291,7 +291,7 @@ export default function VincularOS() {
                   Total: {fmtBRL(totalOSSel)}
                 </span>
               )}
-              <button onClick={() => setSelecionado(null)} style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: "#2563EB" }}>
+              <button className="press-feedback" onClick={() => setSelecionado(null)} style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: "#2563EB" }}>
                 <X size={14} />
               </button>
             </div>
@@ -306,7 +306,7 @@ export default function VincularOS() {
               <span style={{ fontSize: 13, color: "#1D4ED8" }}>
                 <strong>{projetoClienteSel?.nome}</strong> — clique num cliente à direita para vincular (clique de novo para remover).
               </span>
-              <button onClick={() => setSelecionadoCliente(null)} style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: "#2563EB" }}>
+              <button className="press-feedback" onClick={() => setSelecionadoCliente(null)} style={{ marginLeft: "auto", background: "none", border: "none", cursor: "pointer", color: "#2563EB" }}>
                 <X size={14} />
               </button>
             </div>
@@ -575,10 +575,16 @@ function ProjetoPAR({ p, selecionado, onClick, onDesvincular, osOpp, dark, brd, 
 
   return (
     <div onClick={onClick}
+      role="option"
+      aria-selected={selecionado}
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
+      onFocus={e => { e.currentTarget.style.background = dark ? "#1e3a5f" : "#EFF6FF" }}
+      onBlur={e => { e.currentTarget.style.background = selecionado ? (dark ? "#1e3a5f" : "#EFF6FF") : "transparent" }}
       style={{
         padding: "12px 16px", borderBottom: `1px solid ${brd}`, cursor: "pointer",
         background: selecionado ? (dark ? "#1e3a5f" : "#EFF6FF") : "transparent",
-        transition: "background 0.15s",
+        transition: "background 0.15s", outline: "none",
       }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -594,7 +600,7 @@ function ProjetoPAR({ p, selecionado, onClick, onDesvincular, osOpp, dark, brd, 
                 ))}
               </div>
               {onDesvincular && (
-                <button onClick={e => { e.stopPropagation(); onDesvincular() }}
+                <button className="press-feedback" onClick={e => { e.stopPropagation(); onDesvincular() }}
                   style={{ background: "none", border: "none", cursor: "pointer", color: "#DC2626", padding: 2 }} title="Remover vínculos">
                   <X size={13} />
                 </button>
@@ -625,10 +631,16 @@ function ClienteProjetoPAR({ p, selecionado, onClick, onDesvincular, clientesOpp
 
   return (
     <div onClick={onClick}
+      role="option"
+      aria-selected={selecionado}
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
+      onFocus={e => { e.currentTarget.style.background = dark ? "#1e3a5f" : "#EFF6FF" }}
+      onBlur={e => { e.currentTarget.style.background = selecionado ? (dark ? "#1e3a5f" : "#EFF6FF") : "transparent" }}
       style={{
         padding: "12px 16px", borderBottom: `1px solid ${brd}`, cursor: "pointer",
         background: selecionado ? (dark ? "#1e3a5f" : "#EFF6FF") : "transparent",
-        transition: "background 0.15s",
+        transition: "background 0.15s", outline: "none",
       }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         <div style={{ flex: 1, minWidth: 0 }}>
@@ -642,7 +654,7 @@ function ClienteProjetoPAR({ p, selecionado, onClick, onDesvincular, clientesOpp
                 {clienteVinculado?.nome || `Cliente #${p.idOppCliente}`}
               </span>
               {onDesvincular && (
-                <button onClick={e => { e.stopPropagation(); onDesvincular() }}
+                <button className="press-feedback" onClick={e => { e.stopPropagation(); onDesvincular() }}
                   style={{ background: "none", border: "none", cursor: "pointer", color: "#DC2626", padding: 2 }} title="Remover vínculo">
                   <X size={13} />
                 </button>

@@ -81,7 +81,7 @@ export default function PainelIntegracaoOPP() {
               <p className="text-xs text-slate-500">{status?.message || 'Verificando conexão...'}</p>
             </div>
           </div>
-          <button 
+          <button className="press-feedback" 
             onClick={checkStatus}
             disabled={loading}
             className="mt-6 w-full py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-all flex items-center justify-center gap-2"
@@ -100,7 +100,7 @@ export default function PainelIntegracaoOPP() {
           <p className="text-slate-300 text-sm mb-6 leading-relaxed">
             Clique abaixo para forçar a atualização dos últimos 12 meses e reconciliar as faturas.
           </p>
-          <button 
+          <button className="press-feedback" 
             onClick={handleSync}
             disabled={syncLoading || !status?.ok}
             className={`w-full py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-3 ${

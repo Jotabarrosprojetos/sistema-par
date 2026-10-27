@@ -290,7 +290,7 @@ function DetalheRelatorio({ plano, totalRecebidoOPP = 0 }) {
   return (
     <div>
       <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
-        <button onClick={imprimir}
+        <button className="press-feedback" onClick={imprimir}
           style={{ display: "flex", alignItems: "center", gap: 6, padding: "8px 18px", borderRadius: 8, border: "1.5px solid #7C3AED", background: "#EDE9FE", color: "#7C3AED", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
           <Printer size={15} /> Gerar PDF / Imprimir
         </button>
@@ -661,7 +661,7 @@ export default function RelatoriosPlanejamentoPAR() {
     <div style={{ paddingBottom: 60 }}>
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24, flexWrap: "wrap" }}>
-        <button onClick={() => navigate("/planejamento")}
+        <button className="press-feedback" onClick={() => navigate("/planejamento")}
           style={{ display: "flex", alignItems: "center", gap: 4, padding: "7px 12px", borderRadius: 8, border: `1.5px solid ${T.border}`, background: T.card, color: T.text2, fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
           <ArrowLeft size={15} /> Planejamento
         </button>
@@ -672,7 +672,7 @@ export default function RelatoriosPlanejamentoPAR() {
         <span style={{ fontSize: 12, fontWeight: 700, color: "#15803D", background: "#DCFCE7", padding: "4px 12px", borderRadius: 20 }}>
           {filtrados.length} projeto(s) aprovado(s)
         </span>
-        <button onClick={async () => {
+        <button className="press-feedback" onClick={async () => {
             setGerandoPDF(true)
             try {
               let recebidoMap = {}
@@ -698,7 +698,7 @@ export default function RelatoriosPlanejamentoPAR() {
       <div style={{ background: T.card, borderRadius: 14, padding: "16px 20px", border: `1.5px solid ${T.border}`, marginBottom: 20, display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center" }}>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
           {SETORES.map(s => (
-            <button key={s} onClick={() => setFiltroSetor(filtroSetor === s ? "" : s)}
+            <button className="press-feedback" key={s} onClick={() => setFiltroSetor(filtroSetor === s ? "" : s)}
               style={{ padding: "5px 12px", borderRadius: 20, border: `1.5px solid ${filtroSetor === s ? "#7C3AED" : T.border}`, background: filtroSetor === s ? "#EDE9FE" : T.cardAlt, color: filtroSetor === s ? "#7C3AED" : T.text2, fontWeight: 600, fontSize: 12, cursor: "pointer" }}>
               {s}
             </button>
@@ -708,10 +708,10 @@ export default function RelatoriosPlanejamentoPAR() {
           <Search size={14} color={T.text3} />
           <input value={busca} onChange={e => setBusca(e.target.value)} placeholder="Buscar projeto ou cliente..."
             style={{ border: "none", background: "transparent", outline: "none", fontSize: 12, flex: 1, color: T.text1, fontFamily: "inherit" }} />
-          {busca && <button onClick={() => setBusca("")} style={{ background: "none", border: "none", cursor: "pointer", color: T.text3, display: "flex" }}><X size={14} /></button>}
+          {busca && <button className="press-feedback" onClick={() => setBusca("")} style={{ background: "none", border: "none", cursor: "pointer", color: T.text3, display: "flex" }}><X size={14} /></button>}
         </div>
         {(filtroSetor || busca) && (
-          <button onClick={() => { setFiltroSetor(""); setBusca("") }}
+          <button className="press-feedback" onClick={() => { setFiltroSetor(""); setBusca("") }}
             style={{ padding: "5px 12px", borderRadius: 20, border: "1.5px solid #FCA5A5", background: "#FEF2F2", color: "#DC2626", fontWeight: 600, fontSize: 12, cursor: "pointer" }}>
             Limpar
           </button>
@@ -742,7 +742,7 @@ export default function RelatoriosPlanejamentoPAR() {
           return (
             <div key={p.ID_Projeto} style={{ background: T.card, borderRadius: 14, border: `1.5px solid ${estaAberto ? "#7C3AED" : T.border}`, overflow: "hidden", transition: "border-color 0.2s" }}>
               {/* Linha resumo — clicável */}
-              <button onClick={() => setAberto(estaAberto ? null : p.ID_Projeto)}
+              <button className="press-feedback" onClick={() => setAberto(estaAberto ? null : p.ID_Projeto)}
                 style={{ width: "100%", display: "flex", alignItems: "center", gap: 14, padding: "16px 20px", background: estaAberto ? (isDark ? '#1E1040' : '#FAFAFF') : T.card, border: "none", cursor: "pointer", textAlign: "left" }}>
                 {estaAberto ? <ChevronDown size={16} color="#7C3AED" /> : <ChevronRight size={16} color={T.text3} />}
                 <div style={{ flex: 1, minWidth: 0 }}>
