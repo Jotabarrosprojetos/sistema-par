@@ -20,6 +20,10 @@
   --text:       #0D1B2A;
   --text-muted: #5E7899;
   --text-faint: #94AABE;
+
+  /* Curva “fluida” (aproxima uma mola critically-damped) — usada no lugar de ease/linear
+     em transições de UI, pra sentir menos “mecânico” e mais próximo do padrão Apple. */
+  --ease-fluid: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* ── Base ── */
@@ -41,11 +45,14 @@ select option { background: #fff; color: var(--text); }
   border-radius: 14px;
   border: 1px solid var(--border-soft);
   box-shadow: 0 2px 8px rgba(14,39,72,0.06);
-  transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+  transition: box-shadow 0.25s var(--ease-fluid), transform 0.25s var(--ease-fluid), border-color 0.25s var(--ease-fluid);
 }
 .card:hover {
   box-shadow: 0 4px 16px rgba(14,39,72,0.10);
 }
+/* Card clicável (lista/seletor) — dá feedback no pointer-down, não só no hover */
+.card-interactive { cursor: pointer; }
+.card-interactive:active { transform: scale(0.985); }
 .card-glass {
   background: var(--surface);
   border-radius: 14px;
@@ -92,7 +99,7 @@ select option { background: #fff; color: var(--text); }
   font-size: 0.875rem;
   color: var(--text);
   font-family: inherit;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s var(--ease-fluid), box-shadow 0.2s var(--ease-fluid);
   outline: none;
 }
 .form-input::placeholder { color: var(--text-faint); }
@@ -109,7 +116,7 @@ select option { background: #fff; color: var(--text); }
   font-size: 0.875rem;
   color: var(--text);
   font-family: inherit;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s var(--ease-fluid), box-shadow 0.2s var(--ease-fluid);
   outline: none;
   cursor: pointer;
   appearance: none;
@@ -136,7 +143,7 @@ select option { background: #fff; color: var(--text); }
   border-radius: 10px;
   border: none;
   cursor: pointer;
-  transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  transition: background 0.2s var(--ease-fluid), transform 0.15s var(--ease-fluid), box-shadow 0.2s var(--ease-fluid);
   box-shadow: 0 2px 10px rgba(0,181,204,0.25);
   font-family: inherit;
   letter-spacing: 0.01em;
@@ -161,7 +168,7 @@ select option { background: #fff; color: var(--text); }
   padding: 0.625rem 1.25rem;
   border-radius: 10px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s var(--ease-fluid);
   font-family: inherit;
 }
 .btn-secondary:hover {
@@ -183,7 +190,7 @@ select option { background: #fff; color: var(--text); }
   border-radius: 10px;
   background: transparent;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s var(--ease-fluid);
   font-family: inherit;
 }
 .btn-outline:hover {
@@ -204,7 +211,7 @@ select option { background: #fff; color: var(--text); }
   border-radius: 10px;
   border: none;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s var(--ease-fluid);
   font-family: inherit;
 }
 .btn-danger:hover { background: #B91C1C; transform: translateY(-1px); }
@@ -222,7 +229,7 @@ select option { background: #fff; color: var(--text); }
   border-radius: 10px;
   border: none;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s var(--ease-fluid);
   font-family: inherit;
 }
 .btn-success:hover { background: #15803D; transform: translateY(-1px); }
@@ -238,7 +245,7 @@ select option { background: #fff; color: var(--text); }
   border-radius: 10px;
   background: transparent;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s var(--ease-fluid);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -249,6 +256,18 @@ select option { background: #fff; color: var(--text); }
   border-color: var(--cyan);
   background: rgba(0,181,204,0.06);
   color: var(--cyan);
+}
+
+/* ── Foco (teclado) — só aparece em navegação por teclado, não em clique de mouse ── */
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible,
+.btn-outline:focus-visible,
+.btn-danger:focus-visible,
+.btn-success:focus-visible,
+.btn-add:focus-visible,
+.sidebar-item:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 2px;
 }
 
 /* ── Tables ── */
@@ -264,7 +283,7 @@ select option { background: #fff; color: var(--text); }
 }
 .table-row {
   border-bottom: 1px solid var(--border-soft);
-  transition: background 0.12s ease;
+  transition: background 0.12s var(--ease-fluid);
   cursor: default;
 }
 .table-row:hover { background: #F5F9FC; }
@@ -299,7 +318,7 @@ select option { background: #fff; color: var(--text); }
   border-radius: 10px;
   color: rgba(255,255,255,0.40);
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: all 0.18s var(--ease-fluid);
   border: none;
   background: transparent;
   position: relative;
@@ -323,6 +342,7 @@ select option { background: #fff; color: var(--text); }
   background: #00B5CC;
   border-radius: 0 3px 3px 0;
 }
+.sidebar-item:active { transform: scale(0.92); }
 
 /* ── KPI Cards ── */
 .kpi-card { padding: 1.375rem 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; position: relative; overflow: hidden; }
@@ -360,11 +380,34 @@ select option { background: #fff; color: var(--text); }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* Entrada do modal: nasce um pouco menor e mais transparente, assenta no lugar.
+   Sem bounce (nao e um gesto com momentum, e so uma janela abrindo). */
+@keyframes modal-pop {
+  from { opacity: 0; transform: scale(0.96) translateY(6px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.modal-pop { animation: modal-pop 0.22s var(--ease-fluid); }
+
 /* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #C5D2E3; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #9DB3CC; }
+
+/* ── Movimento reduzido (prefers-reduced-motion) ──
+   O usuário que pede isso no sistema não quer MENOS feedback, só um jeito
+   mais contido de dar esse feedback: sem deslocar, sem bounce, só um crossfade curto. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .btn-primary:hover, .btn-danger:hover, .btn-success:hover { transform: none; }
+  .card:hover { transform: none; }
+  .fade-in, .slide-in-right { animation: none; opacity: 1; transform: none; }
+}
 
 /* ── Print ── */
 @media print {
