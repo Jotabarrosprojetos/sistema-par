@@ -92,7 +92,7 @@ function calcKpisFromPlan(plan) {
 function StatCard({ label, value, sub, icon, color = '#7C3AED', bg, warn, onClick }) {
   const isWarn = warn === 'danger'
   const isCaution = warn === 'caution'
-  const solidBg = isWarn ? '#EF4444' : isCaution ? '#F59E0B' : (bg || color)
+  const accent = isWarn ? '#EF4444' : isCaution ? '#F59E0B' : (bg || color)
   return (
     <div
       onClick={onClick}
@@ -100,34 +100,33 @@ function StatCard({ label, value, sub, icon, color = '#7C3AED', bg, warn, onClic
       tabIndex={onClick ? 0 : undefined}
       onKeyDown={onClick ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick(e) } } : undefined}
       style={{
-        background: solidBg,
-        borderRadius: 16, padding: '20px 22px',
-        boxShadow: `0 4px 20px ${solidBg}55`,
+        background: '#fff',
+        border: '1px solid var(--border-soft)',
+        borderRadius: 16, padding: '22px 24px',
+        boxShadow: '0 2px 10px rgba(14,39,72,0.05)',
         cursor: onClick ? 'pointer' : 'default',
-        transition: 'all 0.18s',
+        transition: 'all 0.2s var(--ease-fluid, cubic-bezier(.22,1,.36,1))',
         position: 'relative', overflow: 'hidden',
         outline: 'none',
       }}
-      onMouseEnter={e => { if (onClick) { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = `0 10px 32px ${solidBg}77` } }}
-      onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = `0 4px 20px ${solidBg}55` }}
-      onPointerDown={e => { if (onClick) e.currentTarget.style.transform = 'translateY(-1px) scale(0.98)' }}
+      onMouseEnter={e => { if (onClick) { e.currentTarget.style.transform = 'translateY(-3px)'; e.currentTarget.style.boxShadow = '0 10px 28px rgba(14,39,72,0.10)' } }}
+      onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 2px 10px rgba(14,39,72,0.05)' }}
+      onPointerDown={e => { if (onClick) e.currentTarget.style.transform = 'translateY(-1px) scale(0.985)' }}
       onPointerUp={e => { if (onClick) e.currentTarget.style.transform = 'translateY(-3px)' }}
-      onFocus={e => { if (onClick) e.currentTarget.style.boxShadow = `0 10px 32px ${solidBg}77, 0 0 0 2px #fff, 0 0 0 4px ${solidBg}` }}
-      onBlur={e => { e.currentTarget.style.boxShadow = `0 4px 20px ${solidBg}55` }}
+      onFocus={e => { if (onClick) e.currentTarget.style.boxShadow = `0 10px 28px rgba(14,39,72,0.10), 0 0 0 2px #fff, 0 0 0 4px ${accent}` }}
+      onBlur={e => { e.currentTarget.style.boxShadow = '0 2px 10px rgba(14,39,72,0.05)' }}
     >
-      {/* Decorative circle */}
-      <div style={{ position:'absolute', right:-18, top:-18, width:90, height:90, borderRadius:'50%', background:'rgba(255,255,255,.12)', pointerEvents:'none' }} />
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position:'relative' }}>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,.75)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>{label}</div>
-          <div style={{ fontSize: 26, fontWeight: 900, color: '#fff', lineHeight: 1.1 }}>{value}</div>
-          {sub && <div style={{ fontSize: 11, color: 'rgba(255,255,255,.65)', marginTop: 5 }}>{sub}</div>}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', position:'relative', gap: 12 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>{label}</div>
+          <div style={{ fontSize: 26, fontWeight: 800, color: 'var(--text)', lineHeight: 1.1, letterSpacing: '-0.01em' }}>{value}</div>
+          {sub && <div style={{ fontSize: 11.5, color: 'var(--text-muted)', marginTop: 6, lineHeight: 1.4 }}>{sub}</div>}
         </div>
         <div style={{
-          width: 44, height: 44, borderRadius: 12, flexShrink: 0,
-          background: 'rgba(255,255,255,.2)',
+          width: 42, height: 42, borderRadius: 12, flexShrink: 0,
+          background: `${accent}14`,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          color: '#fff',
+          color: accent,
         }}>{icon}</div>
       </div>
     </div>
@@ -748,7 +747,7 @@ export default function Dashboard() {
 
       {/* ── 4 KPI Cards ── */}
       {vis('kpis') && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 20, marginBottom: 28 }}>
           <StatCard label="Projetos em Andamento" value={emAndamento.length} sub={`de ${projetosFiltrados.length} ativos (outros em backlog, pendência, aguardando faturamento etc.)`} icon={<FolderOpen size={20} />} bg="#22C55E" onClick={() => navigate('/projetos')} />
           <StatCard label="Carteira Aprovada" value={fmt(totalContrato)} sub={`${aprovados.length} planejamento(s) aprovado(s)`} icon={<Briefcase size={20} />} bg="#EF4444" />
           <StatCard label="Total a Pagar" value={fmt(totalAPagar)} sub="custo total dos planejamentos aprovados" icon={<CheckCircle2 size={20} />} bg="#0EA5E9" />
@@ -1044,7 +1043,7 @@ export default function Dashboard() {
             <div style={{ textAlign: 'center', padding: '30px 0', color: '#94A3B8', fontSize: 13 }}>Nenhum projeto</div>
           ) : (
             <>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 12 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 14 }}>
                 {projetosExibidos.map((p, i) => (
                   <SemafProjeto key={i} projeto={p} onClick={() => navigate(`/planejamento/${p.ID_Projeto}`)} />
                 ))}
