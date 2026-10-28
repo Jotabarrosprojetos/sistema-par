@@ -167,6 +167,8 @@ router.post('/usuarios', require('../middleware/auth').authMiddleware, async (re
 
     const PERFIS = ['Admin', 'PO', 'Coordenador', 'Comercial', 'Financeiro', 'Diretoria', 'Visualizador', 'Leitura-Financeiro', 'Leitura-Comercial'];
     if (!PERFIS.includes(perfil)) return res.status(400).json({ error: 'Perfil inválido.' });
+    // OS 3, condicao (e): Admin so e criado por Admin.
+    if (perfil === 'Admin' && req.user.perfil !== 'Admin') return res.status(403).json({ error: 'Só um Admin pode criar outro Admin.' });
 
     const senhaHash = await bcrypt.hash(senha, 12);
     // Deve_Trocar_Senha: 'true' — a senha foi escolhida pelo admin, não pela pessoa,
@@ -184,6 +186,10 @@ router.put('/usuarios/:id', require('../middleware/auth').authMiddleware, async 
     const user = await db.findOne('USER', u => u.ID === req.params.id);
     if (!user) return res.status(404).json({ error: 'Usuário não encontrado.' });
     const { nome, perfil, ativo, senha } = req.body;
+    // OS 3, condicao (e): so Admin promove alguem a Admin ou mexe na conta de um Admin.
+    if (req.user.perfil !== 'Admin' && (user.Perfil === 'Admin' || perfil === 'Admin')) {
+      return res.status(403).json({ error: 'Só um Admin pode alterar contas de Admin ou dar perfil Admin.' });
+    }
     const updated = { ...user, Nome: nome || user.Nome, Perfil: perfil || user.Perfil, Ativo: ativo !== undefined ? String(ativo) : user.Ativo };
     if (senha) updated.Senha_Hash = await bcrypt.hash(senha, 12);
     await db.updateRowById('USER', 'ID', req.params.id, updated);
@@ -198,6 +204,7 @@ router.delete('/usuarios/:id', require('../middleware/auth').authMiddleware, asy
     if (req.user.id === req.params.id) return res.status(400).json({ error: 'Não é possível excluir o próprio usuário.' });
     const user = await db.findOne('USER', u => u.ID === req.params.id);
     if (!user) return res.status(404).json({ error: 'Usuário não encontrado.' });
+    if (user.Perfil === 'Admin' && req.user.perfil !== 'Admin') return res.status(403).json({ error: 'Só um Admin pode excluir um Admin.' });
     await db.deleteRowById('USER', 'ID', req.params.id);
     res.json({ message: 'Usuário excluído com sucesso.' });
   } catch (err) { next(err); }
