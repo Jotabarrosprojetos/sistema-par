@@ -217,6 +217,7 @@ export default function PlanejamentoFinanceiro() {
   const [ccSugestoes, setCcSugestoes] = useState([])
   const [ccFocado, setCcFocado] = useState(false)
   const [planId, setPlanId] = useState(null)          // ID interno do planejamento
+  const [planErro, setPlanErro] = useState(null)      // 'sem-permissao' | 'erro' | null (404 = sem planejamento, nao e erro)
   const [planStatus, setPlanStatus] = useState(null)
   const [planComentario, setPlanComentario] = useState("")
   const [planJustificativaReplan, setPlanJustificativaReplan] = useState("")
@@ -265,6 +266,7 @@ export default function PlanejamentoFinanceiro() {
   const carregar = useCallback(async (id) => {
     if (!id) return
     setLoading(true)
+    setPlanErro(null)
     const proj = projetos.find(p => p.ID_Projeto === id) || {}
     try {
       const r = await api.get(`/planejamento/${id}`)
@@ -303,7 +305,13 @@ export default function PlanejamentoFinanceiro() {
         despesas:         Array.isArray(d.despesas)         ? d.despesas         : [],
         despesasInternas: Array.isArray(d.despesasInternas) ? d.despesasInternas : [],
       })
-    } catch {
+    } catch (err) {
+      // Antes qualquer erro (inclusive 403 de perfil sem acesso) caia aqui e a tela
+      // mostrava "planejamento ainda nao salvo" com valores do cadastro — parecia bug
+      // de dado. So o 404 significa de fato "sem planejamento".
+      const st = err?.response?.status
+      if (st === 403) setPlanErro('sem-permissao')
+      else if (st && st !== 404) setPlanErro('erro')
       setPlanId(null); setPlanStatus(null); setPlanTravado(false); setPlanComentario(""); setPlanJustificativaReplan(""); setBaseline(null); setHistoricoBaselines([])
       setForm({ ...FORM0, nomeProjeto: proj.Nome || "", cliente: proj.Cliente || "", setor: proj.Setor || "", linkClickUp: proj.Link_ClickUp || "", valorContrato: proj.Valor_Global || "" })
     }
@@ -1231,7 +1239,15 @@ export default function PlanejamentoFinanceiro() {
 
       {loading && <div style={{ textAlign: "center", padding: 48, color: "#64748b" }}>Carregando planejamento...</div>}
 
-      {projetoId && !loading && (<>
+      {projetoId && !loading && planErro && (
+        <div style={{ marginTop: 16, padding: '16px 20px', borderRadius: 12, background: isDark ? '#1E293B' : '#F8FAFC', border: `1.5px solid ${isDark ? '#334155' : '#E2E8F0'}`, color: isDark ? '#E2E8F0' : '#334155', fontSize: 14 }}>
+          {planErro === 'sem-permissao'
+            ? <><b>Seu perfil não tem acesso ao planejamento financeiro.</b> Peça a um administrador para ajustar seu perfil no Par.</>
+            : <><b>Não foi possível carregar o planejamento.</b> Tente de novo em instantes; se continuar, avise o suporte.</>}
+        </div>
+      )}
+
+      {projetoId && !loading && !planErro && (<>
 
         {/* Banner: projeto sem planejamento financeiro salvo */}
         {!planId && (
