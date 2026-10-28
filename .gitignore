@@ -32,3 +32,16 @@ Thumbs.db
 *.swp
 backend/levantamento-resultado-completo.json
 *-resultado-completo.json
+
+# Segredos: qualquer variante de .env (backups inclusive), menos o exemplo
+*.env
+.env.*
+**/.env.*
+!.env.example
+!frontend/.env.production
+
+# Dados exportados do OPP / planilhas de trabalho — nunca no repositorio (OS 3, condicao b)
+*.xlsx
+*.xls
+*.csv
+backend/ref-*.json
