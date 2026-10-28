@@ -726,7 +726,10 @@ async function syncProjectStatuses(tasks, projetos, lists = []) {
     const prazoVencido = !!novoVenc && novoVenc < hojeStr;
 
     let novoStatus = project.Status;
-    if (listStatusClosed || done === total) {
+    // Concluido segue a LISTA do ClickUp (decisao 28/10/2026): todas as tarefas
+    // fechadas nao bastam se a lista ainda esta aberta. So quando o item nao tem
+    // status proprio (projeto-pasta) as tarefas decidem.
+    if (listStatusClosed || (!listStatusRaw && done === total)) {
       novoStatus = 'Concluído';
     } else if (listStatusRaw === 'backlog' || listStatusRaw === 'a planejar') {
       novoStatus = 'Backlog';
