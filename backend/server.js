@@ -103,7 +103,10 @@ cron.schedule(`*/${syncInterval} * * * *`, async () => {
   }
 });
 
-// Sync automático OPP a cada 2 horas
+// Sync automático OPP a cada 2 horas (minuto 7, p/ nunca bater junto com o
+// cron do ClickUp de 15/15min nem com o sync completo de horas às 3h17 —
+// os dois rodando ao mesmo tempo foi o que causou os crashes de memoria
+// (OOM) em producao, achado em 28/10/2026)
 const { syncReceitasDespesas, syncOrdensCompra } = require('./src/services/oppService');
 const db = process.env.USE_POSTGRES === 'true'
   ? require('./src/services/postgresService')
@@ -119,7 +122,7 @@ db.initialize().then(() => {
   console.error('[Startup] Erro ao inicializar banco:', err.message);
 });
 
-cron.schedule('0 */2 * * *', async () => {
+cron.schedule('7 */2 * * *', async () => {
   try {
     console.log(`[CRON] Iniciando sync OPP — ${new Date().toLocaleString('pt-BR')}`);
     const [result] = await Promise.all([
@@ -129,6 +132,20 @@ cron.schedule('0 */2 * * *', async () => {
     console.log(`[CRON] Sync OPP concluído: ${result.totalReceitas} receitas, ${result.totalDespesas} despesas, ${result.medicoesReconciliadas} medições.`);
   } catch (err) {
     console.error('[CRON] Erro no sync OPP:', err.message);
+  }
+});
+
+// Sync COMPLETO de horas do ClickUp (3 anos) 1x por dia, de madrugada —
+// o ciclo de 15/15min (acima) so cobre os ultimos 30 dias pra nao sobrecarregar
+// a memoria; isso aqui garante que uma edicao em lancamento antigo tambem
+// seja pega, só que 1x/dia em vez de 96x/dia.
+cron.schedule('17 3 * * *', async () => {
+  try {
+    console.log('[CRON] Iniciando sync COMPLETO de horas do ClickUp (3 anos)...');
+    await syncClickUp(null, { fullHistorico: true });
+    console.log('[CRON] Sync completo de horas concluído.');
+  } catch (err) {
+    console.error('[CRON] Erro no sync completo de horas:', err.message);
   }
 });
 

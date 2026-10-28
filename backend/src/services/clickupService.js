@@ -769,7 +769,7 @@ async function syncProjectStatuses(tasks, projetos, lists = []) {
 
 let _syncing = false; // lock para evitar execuções simultâneas
 
-async function syncClickUp(idProjeto = null) {
+async function syncClickUp(idProjeto = null, opts = {}) {
   if (_syncing) {
     console.log('[ClickUp] Sync já em andamento, ignorando nova chamada.');
     return;
@@ -779,7 +779,7 @@ async function syncClickUp(idProjeto = null) {
     if (idProjeto) {
       await syncSingleProject(idProjeto);
     } else {
-      await _doSync();
+      await _doSync(opts);
     }
   } finally {
     _syncing = false;
@@ -852,7 +852,16 @@ async function syncSingleProject(idProjeto) {
   }
 }
 
-async function _doSync() {
+async function _doSync(opts = {}) {
+  // Por padrao (ciclo de 15min), so revalida os lancamentos de horas recentes.
+  // O historico completo (3 anos) so roda 1x/dia via cron separado (ver server.js) —
+  // antes disso era refeito em TODO ciclo de 15min, ~400 chamadas a API do ClickUp
+  // e um array gigante em memoria por ciclo, o que estava derrubando o processo
+  // no Railway por falta de memoria (OOM, achado em 28/10/2026 a partir de um
+  // crash real em producao). syncTimeEntries faz upsert — nao apaga nada que
+  // nao veio na busca atual, entao reduzir a janela no ciclo frequente nao
+  // perde historico: ele so deixa de ser re-verificado a cada 15min.
+  const fullHistorico = opts.fullHistorico === true;
   const teamId = process.env.CLICKUP_TEAM_ID;
   const spaceIdsEnv = (process.env.CLICKUP_SPACE_IDS || '').trim();
 
@@ -1033,8 +1042,10 @@ async function _doSync() {
 
     const teamId = process.env.CLICKUP_TEAM_ID;
     const end = Date.now();
-    const start = end - 3 * 365 * 24 * 60 * 60 * 1000; // 3 anos
-    const chunkMs = 3 * 24 * 60 * 60 * 1000; // chunks de 3 dias (~400 reqs total)
+    const janelaDias = fullHistorico ? 3 * 365 : 30; // full: 3 anos (1x/dia) · incremental: 30 dias (a cada 15min)
+    const start = end - janelaDias * 24 * 60 * 60 * 1000;
+    const chunkMs = 3 * 24 * 60 * 60 * 1000; // chunks de 3 dias (evita limite de 100/req)
+    console.log(`[ClickUp] Sync de horas: janela ${fullHistorico ? 'COMPLETA (3 anos)' : 'incremental (30 dias)'}.`);
     const allTimeEntries = [];
     const seenEntryIds = new Set();
     let chunkStart = start;
