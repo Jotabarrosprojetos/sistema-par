@@ -59,6 +59,10 @@ function Section({ title, open, onToggle, children, badge, limitBadge }) {
 
 // ── PAR calcs ────────────────────────────────────────────────────────────────
 const pBR = (v) => parseFloat(String(v || 0).replace(/\./g, '').replace(',', '.')) || 0
+// /api/projetos devolve Valor_Global ja como numero JS em string ("14658.95"). O form usa
+// formato BR, e o pBR acima le o ponto como milhar -> virava 1.465.895 ("fator 100").
+// Converte pra BR antes de jogar no form.
+const numParaBR = (v) => { const n = Number(v); return Number.isFinite(n) && n !== 0 ? String(n).replace('.', ',') : '' }
 
 function calcPAR(form) {
   const V = pBR(form.valorContrato)
@@ -292,7 +296,7 @@ export default function PlanejamentoFinanceiro() {
         respAprovacao:     p.Resp_Aprovacao     || d.respAprovacao     || "",
         linkClickUp:       p.Link_ClickUp       || d.linkClickUp       || proj.Link_ClickUp || "",
         justificativa:     d.justificativa      || "",
-        valorContrato:     p.Valor_Contrato     || d.valorContrato     || proj.Valor_Global || "",
+        valorContrato:     p.Valor_Contrato     || d.valorContrato     || numParaBR(proj.Valor_Global),
         impostosPerc:      p.Impostos_Perc      || d.impostosPerc      || "20",
         taxaAdmPerc:       p.Taxa_Adm_Perc      || d.taxaAdmPerc       || "12",
         dataInicioOS:         p.Data_Inicio_OS         || d.dataInicioOS         || "",
@@ -313,7 +317,7 @@ export default function PlanejamentoFinanceiro() {
       if (st === 403) setPlanErro('sem-permissao')
       else if (st && st !== 404) setPlanErro('erro')
       setPlanId(null); setPlanStatus(null); setPlanTravado(false); setPlanComentario(""); setPlanJustificativaReplan(""); setBaseline(null); setHistoricoBaselines([])
-      setForm({ ...FORM0, nomeProjeto: proj.Nome || "", cliente: proj.Cliente || "", setor: proj.Setor || "", linkClickUp: proj.Link_ClickUp || "", valorContrato: proj.Valor_Global || "" })
+      setForm({ ...FORM0, nomeProjeto: proj.Nome || "", cliente: proj.Cliente || "", setor: proj.Setor || "", linkClickUp: proj.Link_ClickUp || "", valorContrato: numParaBR(proj.Valor_Global) })
     }
     setLoading(false)
   }, [projetos])
