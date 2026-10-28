@@ -1014,7 +1014,23 @@ async function _doSync(opts = {}) {
         await syncProjectStatuses(mapped, [projeto], [item]);
         await gerarAlertasProjeto(mapped, projeto, { planejamentos: planejamentosParaAlertas, alertasAtual: alertasParaSync });
       }
-      allTasks.push(...mapped);
+      // Guarda so uma versao ENXUTA de cada task pro resto do sync (OS Interna,
+      // mapa lista->projeto e fallback de time_spent). A task crua do ClickUp traz
+      // custom_fields com type_config (todas as opcoes de todo dropdown) repetido
+      // em cada task — acumular isso de ~400 listas era o que fazia o processo
+      // chegar a 4GB+ (achado 28/10/2026 nas metricas do Railway).
+      for (const t of mapped) {
+        const osInterna = getCustomField(t, 'OS Interna');
+        allTasks.push({
+          id: t.id,
+          name: t.name,
+          time_spent: t.time_spent,
+          assignees: (t.assignees || []).slice(0, 1).map(a => ({ username: a.username, email: a.email })),
+          custom_fields: osInterna ? [{ name: 'OS Interna', type: 'text', value: String(osInterna) }] : [],
+          _listId: t._listId,
+          _folderId: t._folderId,
+        });
+      }
     } catch (err) {
       console.error(`[ClickUp] Erro ao buscar tarefas da lista ${item.name}:`, err.message);
     }
