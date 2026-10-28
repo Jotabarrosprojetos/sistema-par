@@ -22,7 +22,7 @@ const NAV_GROUPS = [
   {
     label: 'Financeiro',
     items: [
-      { to: '/planejamento', label: 'Plan. Financeiro',         icon: CalculatorIcon,           perfis: ['PO','Coordenador','Admin','Diretoria','Leitura-Financeiro'] },
+      { to: '/planejamento', label: 'Plan. Financeiro',         icon: CalculatorIcon,           perfis: ['PO','Coordenador','Admin','Diretoria','Comercial','Financeiro','Leitura-Financeiro'] },
       { to: '/aprovacao',    label: 'Aprovações & Baseline',    icon: ShieldCheckIcon,          perfis: ['PO','Coordenador','Admin','Diretoria','Leitura-Financeiro'], badge: 'aprovacao' },
       { to: '/medicoes',     label: 'Medições & Faturamento',   icon: ChartBarIcon,             perfis: ['PO','Financeiro','Comercial','Coordenador','Admin','Diretoria','Leitura-Financeiro'] },
       { to: '/extrato',               label: 'Extrato por Projeto',      icon: BanknotesIcon,               perfis: ['Financeiro','Coordenador','Admin','Diretoria'] },
