@@ -80,7 +80,9 @@ app.get('/api/health', (req, res) => {
 initWebSocket(server);
 
 // ── Sync manual ClickUp ───────────────────────────────────────────────────────
-app.post('/api/sync-clickup', async (req, res) => {
+// Exige login (28/10/2026, OS 3 condicao e): antes qualquer um disparava um sync
+// completo sem autenticacao — e o sync e o processo mais pesado do servidor.
+app.post('/api/sync-clickup', require('./src/middleware/auth').authMiddleware, async (req, res) => {
   try {
     console.log('[Manual] Sync ClickUp disparado manualmente.');
     syncClickUp().then(() => checkAllAlerts()).catch(e => console.error('[Manual] Erro sync:', e.message));

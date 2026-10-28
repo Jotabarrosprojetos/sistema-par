@@ -4,61 +4,9 @@ const opp = require('../services/oppService');
 
 const router = express.Router();
 
-// GET /api/opp/diagnostico-cc — diagnóstico dos campos reais de contas-pagar
-router.get('/diagnostico-cc', async (req, res, next) => {
-  try {
-    const amostra = await opp.oppRequest('GET', '/contas-pagar?limit=5&offset=0');
-    const lista = Array.isArray(amostra) ? amostra : (amostra?.data || []);
-    res.json({
-      total_amostrado: lista.length,
-      campos_primeiro_registro: lista[0] ? Object.keys(lista[0]) : [],
-      registros: lista.map(d => d),
-    });
-  } catch (err) { next(err); }
-});
-
-// GET /api/opp/diagnostico-receitas — mostra contas-receber agrupados por OS para debug
-router.get('/diagnostico-receitas', async (req, res, next) => {
-  try {
-    const { os } = req.query; // filtro opcional por número de OS
-    let offset = 0, todos = [];
-    while (true) {
-      const r = await opp.oppRequest('GET', `/contas-receber?limit=250&offset=${offset}&lixeira=Nao`);
-      const lista = Array.isArray(r) ? r : (r?.data || []);
-      if (lista.length === 0) break;
-      todos.push(...lista);
-      if (lista.length < 250) break;
-      offset += 250;
-      if (offset > 5000) break;
-    }
-    const osRegex = /(?:OS\s+nro?\.\s*|ordem de servi[cç]o\s*n[º°]?\s*)(\d+)/i;
-    const porOS = {};
-    for (const r of todos) {
-      const match = (r.observacoes_rec || '').match(osRegex);
-      if (!match) continue;
-      const osNum = match[1];
-      if (!porOS[osNum]) porOS[osNum] = { os: osNum, totalRecebido: 0, totalPendente: 0, registros: [] };
-      const v = parseFloat(r.valor_rec || 0);
-      if (r.liquidado_rec === 'Sim') porOS[osNum].totalRecebido += v;
-      else porOS[osNum].totalPendente += v;
-      porOS[osNum].registros.push({ nome_cliente: r.nome_cliente, valor_rec: r.valor_rec, liquidado: r.liquidado_rec, data_pag: r.data_pagamento });
-    }
-    const resultado = Object.values(porOS).sort((a, b) => Number(b.os) - Number(a.os));
-    const filtrado = os ? resultado.filter(x => x.os === String(os)) : resultado;
-    // Registros SEM o padrão de OS — amostrar para ver o formato real
-    const semOS = todos.filter(r => !(r.observacoes_rec || '').match(osRegex));
-    const amostrasObservacoes = [...new Set(semOS.map(r => r.observacoes_rec || '(vazio)').filter(Boolean))].slice(0, 30);
-
-    res.json({
-      total_registros_opp: todos.length,
-      total_os_encontradas: resultado.length,
-      total_sem_padrao_os: semOS.length,
-      aviso: 'centro_custos_rec é sempre null no OPP — matching é feito pelo número da OS em observacoes_rec',
-      os_agrupadas: filtrado,
-      amostra_observacoes_sem_os: amostrasObservacoes,
-    });
-  } catch (err) { next(err); }
-});
+// Removidas 28/10/2026 (OS 3, condicao e): /diagnostico-cc e /diagnostico-receitas
+// eram publicas (sem login) e devolviam lancamentos reais do OPP. Scripts de debug,
+// sem uso em nenhuma tela.
 
 // ── GET /api/opp/os-para-vincular — projetos PAR + OS do OPP para tela de vínculo ──
 router.get('/os-para-vincular', authMiddleware, async (req, res, next) => {
