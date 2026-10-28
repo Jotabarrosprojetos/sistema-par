@@ -354,10 +354,12 @@ async function autoImportProjects(items) {
           if (s === 'em andamento') return 'Em Andamento';
           return null; // não sobrescreve se não reconhecer
         })();
-        if (statusClickUp && existente.Status !== statusClickUp) {
-          upd.Status = statusClickUp;
-          console.log(`[ClickUp] Status atualizado: "${existente.Status}" → "${statusClickUp}"`);
-        }
+        // Status NAO e mais gravado aqui (28/10/2026): esta regra mandava backlog do
+        // ClickUp pra "A Planejar" (que no PAR e a fase financeira, antes do ClickUp)
+        // e ignorava o prazo, desfazendo a cada ciclo o que a "passagem leve" e
+        // syncProjectStatuses decidiam — os status ficavam indo e voltando a cada 15min.
+        // Quem decide o status agora: passagem leve (todos) + syncProjectStatuses (ativos).
+        void statusClickUp;
         // Setor: corrige apenas se estiver vazio
         if (!existente.Setor || existente.Setor.trim() === '') {
           const setorInferido = inferirSetorPorKeyword(item.name);
@@ -968,8 +970,11 @@ async function _doSync(opts = {}) {
       'em andamento': 'Em Andamento', 'in progress': 'Em Andamento', 'planejado': 'Em Andamento',
     };
     const novoStatus = statusMap[listStatusRaw];
+    // "Em Andamento (Atrasado)" e calculado por syncProjectStatuses a partir do prazo;
+    // a lista no ClickUp so diz "em andamento", entao nao rebaixa o atrasado aqui.
+    const preservaAtrasado = novoStatus === 'Em Andamento' && projeto.Status === 'Em Andamento (Atrasado)';
     // Só atualiza se o status mudou E o novo status é conhecido (não sobrescreve com undefined)
-    if (novoStatus && novoStatus !== projeto.Status) {
+    if (novoStatus && novoStatus !== projeto.Status && !preservaAtrasado) {
       console.log(`[ClickUp] Status leve: "${projeto.Nome}" ${projeto.Status} → ${novoStatus}`);
       await db.updateRowById('Projetos_Contratos', 'ID_Projeto', projeto.ID_Projeto, {
         ...projeto, Status: novoStatus, Atualizado_Em: new Date().toISOString(),
