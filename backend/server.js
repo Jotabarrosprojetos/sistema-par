@@ -37,7 +37,12 @@ app.use(cors({
   origin: (origin, cb) => cb(null, true),
   credentials: true,
 }));
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({
+  limit: '10mb',
+  // Guarda o corpo cru so do webhook do ClickUp, pra validar a assinatura HMAC
+  // sobre os bytes exatos que o ClickUp assinou.
+  verify: (req, res, buf) => { if (req.originalUrl.startsWith('/api/clickup/webhook')) req.rawBody = buf; },
+}));
 app.use(express.urlencoded({ extended: true }));
 
 // Pasta de uploads temporários

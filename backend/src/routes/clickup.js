@@ -13,14 +13,28 @@ router.post('/webhook', async (req, res) => {
     const signature = req.headers['x-signature'];
     const secret = process.env.CLICKUP_WEBHOOK_SECRET;
 
-    // Valida assinatura HMAC se o secret estiver configurado
-    if (secret && signature) {
-      const rawBody = JSON.stringify(req.body);
+    // Rota publica (o ClickUp chama sem login), entao a assinatura HMAC e o que impede
+    // terceiros de forjar eventos. Antes, uma chamada SEM o header x-signature pulava a
+    // validacao mesmo com o secret configurado (OS 3, condicao e — 28/10/2026).
+    if (!secret) {
+      console.warn('[ClickUp Webhook] CLICKUP_WEBHOOK_SECRET nao configurado — evento descartado.');
+      return res.status(200).json({ ok: false, reason: 'secret_not_configured' });
+    }
+    if (!signature) {
+      console.warn('[ClickUp Webhook] Sem assinatura — evento descartado.');
+      return res.status(200).json({ ok: false, reason: 'missing_signature' });
+    }
+    {
+      // HMAC sobre os bytes exatos recebidos (req.rawBody, guardado no express.json do
+      // server.js); JSON.stringify(req.body) pode diferir do corpo original.
+      const rawBody = req.rawBody || Buffer.from(JSON.stringify(req.body));
       const expected = crypto
         .createHmac('sha256', secret)
         .update(rawBody)
         .digest('hex');
-      if (signature !== expected) {
+      const a = Buffer.from(String(signature));
+      const b = Buffer.from(expected);
+      if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) {
         console.warn('[ClickUp Webhook] Assinatura inválida — evento descartado.');
         return res.status(200).json({ ok: false, reason: 'invalid_signature' });
       }
@@ -74,6 +88,10 @@ router.post('/registrar-webhook', async (req, res, next) => {
       ok: true,
       message: 'Webhook registrado no ClickUp com sucesso.',
       webhookId: resultado.id,
+      // O ClickUp so devolve o secret na criacao: salvar em CLICKUP_WEBHOOK_SECRET no
+      // Railway. Sem ele o endpoint descarta todos os eventos (OS 3, condicao e).
+      secret: resultado.webhook?.secret || resultado.secret || null,
+      aviso: 'Copie o secret para a variavel CLICKUP_WEBHOOK_SECRET no Railway; ele nao e mostrado de novo.',
       endpoint: `${process.env.CLICKUP_WEBHOOK_BASE_URL}/api/clickup/webhook`,
     });
   } catch (err) {
