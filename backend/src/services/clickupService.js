@@ -267,7 +267,9 @@ async function getAllListsFromSpace(spaceId) {
         // Se sim: Pasta = Cliente, Listas = Projetos (fluxo normal)
         // Se não: Pasta = Projeto em si (ex: ÁGUAS DO SERTÃO - CONTRATO 15)
         const temListaComSetor = lists.some(l => detectarSetorPorPrefixo(l.name) !== '');
-        console.log(`[ClickUp DIAG] Pasta "${folder.name}" (${folder.id}): listas=[${lists.map(l => `"${l.name}"`).join(', ')}] | temListaComSetor=${temListaComSetor}`);
+        // Removido 28/10/2026: log de diagnostico imprimia o nome de TODAS as listas de
+        // TODAS as 68 pastas, por extenso, a cada ciclo de 15min (96x/dia) — sobra de uma
+        // investigacao pontual anterior. So resume em 1 linha curta agora.
         if (temListaComSetor) {
           for (const list of lists) {
             result.push({ ...list, _isFolder: false, _folderId: folder.id, _folderName: folder.name, _spaceId: spaceId });
