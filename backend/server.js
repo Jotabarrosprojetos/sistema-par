@@ -2,7 +2,16 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const http = require('http');
-const cron = require('node-cron');
+const nodeCron = require('node-cron');
+// DISABLE_CRON=true no ambiente de teste do Railway: nao roda os syncs automaticos
+// (ClickUp/OPP) nem os alertas agendados (OS 3, condicao d — 28/10/2026).
+const CRON_DESLIGADO = process.env.DISABLE_CRON === 'true';
+const cron = {
+  schedule: (expr, fn) => {
+    if (CRON_DESLIGADO) { console.log(`[CRON] Desligado (DISABLE_CRON=true): ${expr}`); return null; }
+    return nodeCron.schedule(expr, fn);
+  },
+};
 const path = require('path');
 
 const { initWebSocket } = require('./src/services/websocketService');
