@@ -4,7 +4,7 @@ const { authMiddleware, authorize } = require('../middleware/auth');
 
 const router = express.Router();
 router.use(authMiddleware);
-router.use(authorize('Diretoria', 'Leitura-Financeiro'));
+router.use(authorize('PO','Comercial','Financeiro','Coordenador','Diretoria','Leitura-Financeiro'));
 
 function getPool() {
   return new Pool({

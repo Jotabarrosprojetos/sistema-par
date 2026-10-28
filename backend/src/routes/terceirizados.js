@@ -72,7 +72,7 @@ async function mapaOrdensCompra() {
 }
 
 // GET /api/terceirizados?projeto=ID
-router.get('/', authMiddleware, authorize('PO','Comercial','Coordenador','Diretoria','Leitura-Financeiro'), async (req, res, next) => {
+router.get('/', authMiddleware, authorize('PO','Comercial','Financeiro','Coordenador','Diretoria','Leitura-Financeiro'), async (req, res, next) => {
   try {
     const { projeto, idProjeto, status } = req.query;
     const filtroId = projeto || idProjeto;
@@ -182,7 +182,7 @@ router.get('/', authMiddleware, authorize('PO','Comercial','Coordenador','Direto
 });
 
 // GET /api/terceirizados/:id
-router.get('/:id', authMiddleware, authorize('PO','Comercial','Coordenador','Diretoria','Leitura-Financeiro'), async (req, res, next) => {
+router.get('/:id', authMiddleware, authorize('PO','Comercial','Financeiro','Coordenador','Diretoria','Leitura-Financeiro'), async (req, res, next) => {
   try {
     const row = await db.findOne('Terceirizados', (r) => r.ID === req.params.id);
     if (!row) return res.status(404).json({ error: 'Terceirizado não encontrado.' });
@@ -193,7 +193,7 @@ router.get('/:id', authMiddleware, authorize('PO','Comercial','Coordenador','Dir
 });
 
 // POST /api/terceirizados — cria novo terceirizado
-router.post('/', authMiddleware, authorize('PO','Comercial','Coordenador','Diretoria'), audit, async (req, res, next) => {
+router.post('/', authMiddleware, authorize('PO','Comercial','Financeiro','Coordenador','Diretoria'), audit, async (req, res, next) => {
   try {
     const {
       idProjeto, ID_Projeto,
@@ -304,7 +304,7 @@ router.post('/', authMiddleware, authorize('PO','Comercial','Coordenador','Diret
 });
 
 // PUT /api/terceirizados/:id — atualiza status ou dados
-router.put('/:id', authMiddleware, authorize('PO','Comercial','Coordenador','Diretoria'), audit, async (req, res, next) => {
+router.put('/:id', authMiddleware, authorize('PO','Comercial','Financeiro','Coordenador','Diretoria'), audit, async (req, res, next) => {
   try {
     const row = await db.findOne('Terceirizados', (r) => r.ID === req.params.id);
     if (!row) return res.status(404).json({ error: 'Terceirizado não encontrado.' });
@@ -343,7 +343,7 @@ router.put('/:id', authMiddleware, authorize('PO','Comercial','Coordenador','Dir
 });
 
 // DELETE /api/terceirizados/:id — cancela (soft delete)
-router.delete('/:id', authMiddleware, authorize('PO','Comercial','Coordenador','Diretoria'), audit, async (req, res, next) => {
+router.delete('/:id', authMiddleware, authorize('PO','Comercial','Financeiro','Coordenador','Diretoria'), audit, async (req, res, next) => {
   try {
     const row = await db.findOne('Terceirizados', (r) => r.ID === req.params.id);
     if (!row) return res.status(404).json({ error: 'Terceirizado não encontrado.' });

@@ -217,7 +217,7 @@ function calcularTotais(dados) {
 
 // GET /api/planejamento — lista todos os planejamentos
 // ── POST /api/planejamento/migrar-baselines ─── deve vir ANTES das rotas /:id
-router.post('/migrar-baselines', authMiddleware, authorize('PO','Coordenador','Diretoria'), async (req, res, next) => {
+router.post('/migrar-baselines', authMiddleware, authorize('PO','Comercial','Financeiro','Coordenador','Diretoria'), async (req, res, next) => {
   try {
     if (!['Admin', 'Diretoria'].includes(req.user?.perfil)) {
       return res.status(403).json({ error: 'Sem permissão.' });
@@ -270,7 +270,7 @@ router.post('/migrar-baselines', authMiddleware, authorize('PO','Coordenador','D
   } catch (err) { next(err); }
 });
 
-router.get('/', authMiddleware, authorize('PO','Coordenador','Diretoria','Leitura-Financeiro'), async (req, res, next) => {
+router.get('/', authMiddleware, authorize('PO','Comercial','Financeiro','Coordenador','Diretoria','Leitura-Financeiro'), async (req, res, next) => {
   try {
     const [planejamentos, projetos, terceirizados, ocs] = await Promise.all([
       db.readSheet('Planejamentos'),
@@ -318,7 +318,7 @@ router.get('/', authMiddleware, authorize('PO','Coordenador','Diretoria','Leitur
 });
 
 // GET /api/planejamento/:id — detalhe de um planejamento
-router.get('/:id', authMiddleware, authorize('PO','Coordenador','Diretoria','Leitura-Financeiro'), async (req, res, next) => {
+router.get('/:id', authMiddleware, authorize('PO','Comercial','Financeiro','Coordenador','Diretoria','Leitura-Financeiro'), async (req, res, next) => {
   try {
     const plan = await db.findOne('Planejamentos', (p) => p.ID === req.params.id || p.ID_Projeto === req.params.id);
     if (!plan) return res.status(404).json({ error: 'Planejamento não encontrado.' });
@@ -336,7 +336,7 @@ router.get('/:id', authMiddleware, authorize('PO','Coordenador','Diretoria','Lei
 });
 
 // POST /api/planejamento — cria ou salva rascunho de planejamento
-router.post('/', authMiddleware, authorize('PO','Coordenador','Diretoria'), audit, async (req, res, next) => {
+router.post('/', authMiddleware, authorize('PO','Comercial','Financeiro','Coordenador','Diretoria'), audit, async (req, res, next) => {
   try {
     const dados = req.body;
     const totais = calcularTotais(dados);
@@ -792,13 +792,13 @@ async function handleAprovar(req, res, next, acaoForced) {
 }
 
 // POST /api/planejamento/:id/aprovar — aprova um planejamento
-router.post('/:id/aprovar', authMiddleware, authorize('PO','Coordenador','Diretoria'), (req, res, next) => handleAprovar(req, res, next, 'aprovar'));
+router.post('/:id/aprovar', authMiddleware, authorize('PO','Comercial','Financeiro','Coordenador','Diretoria'), (req, res, next) => handleAprovar(req, res, next, 'aprovar'));
 
 // POST /api/planejamento/:id/rejeitar — rejeita um planejamento
-router.post('/:id/rejeitar', authMiddleware, authorize('PO','Coordenador','Diretoria'), (req, res, next) => handleAprovar(req, res, next, 'rejeitar'));
+router.post('/:id/rejeitar', authMiddleware, authorize('PO','Comercial','Financeiro','Coordenador','Diretoria'), (req, res, next) => handleAprovar(req, res, next, 'rejeitar'));
 
 // GET /api/planejamento/pendentes — planejamentos aguardando aprovação
-router.get('/pendentes/lista', authMiddleware, authorize('PO','Coordenador','Diretoria','Leitura-Financeiro'), async (req, res, next) => {
+router.get('/pendentes/lista', authMiddleware, authorize('PO','Comercial','Financeiro','Coordenador','Diretoria','Leitura-Financeiro'), async (req, res, next) => {
   try {
     if (!['Coordenador', 'Admin', 'Diretoria'].includes(req.user.perfil)) {
       return res.status(403).json({ error: 'Sem permissão.' });
@@ -813,7 +813,7 @@ router.get('/pendentes/lista', authMiddleware, authorize('PO','Coordenador','Dir
 
 // ── POST /api/planejamento/:id/checar-integridade ───────────────────────────
 // Checklist de integridade antes de mover para baseline / aprovação
-router.get('/:id/checar-integridade', authMiddleware, authorize('PO','Coordenador','Diretoria','Leitura-Financeiro'), async (req, res, next) => {
+router.get('/:id/checar-integridade', authMiddleware, authorize('PO','Comercial','Financeiro','Coordenador','Diretoria','Leitura-Financeiro'), async (req, res, next) => {
   try {
     const plan = await db.findOne('Planejamentos', (p) => p.ID === req.params.id || p.ID_Projeto === req.params.id);
     if (!plan) return res.status(404).json({ error: 'Planejamento não encontrado.' });
@@ -854,7 +854,7 @@ router.get('/:id/checar-integridade', authMiddleware, authorize('PO','Coordenado
 
 // ── POST /api/planejamento/:id/baseline ──────────────────────────────────────
 // Trava o baseline PAR com versionamento (Versão 1, Versão 2...)
-router.post('/:id/baseline', authMiddleware, authorize('PO','Coordenador','Diretoria'), async (req, res, next) => {
+router.post('/:id/baseline', authMiddleware, authorize('PO','Comercial','Financeiro','Coordenador','Diretoria'), async (req, res, next) => {
   try {
     const plan = await db.findOne('Planejamentos', (p) => p.ID === req.params.id);
     if (!plan) return res.status(404).json({ error: 'Planejamento não encontrado.' });
@@ -964,7 +964,7 @@ router.post('/:id/baseline', authMiddleware, authorize('PO','Coordenador','Diret
 
 // ── GET /api/planejamento/:id/comparativo ────────────────────────────────────
 // Retorna lado a lado: planejado (baseline) vs executado (Log_Horas do ClickUp)
-router.get('/:id/comparativo', authMiddleware, authorize('PO','Coordenador','Diretoria','Leitura-Financeiro'), async (req, res, next) => {
+router.get('/:id/comparativo', authMiddleware, authorize('PO','Comercial','Financeiro','Coordenador','Diretoria','Leitura-Financeiro'), async (req, res, next) => {
   try {
     // Aceita tanto o ID do planejamento quanto o ID do projeto
     const plan = await db.findOne('Planejamentos', (p) => p.ID === req.params.id || p.ID_Projeto === req.params.id);
@@ -1283,7 +1283,7 @@ router.get('/:id/comparativo', authMiddleware, authorize('PO','Coordenador','Dir
 });
 
 // GET /api/planejamento/:id/despesas-opp — busca despesas reais do OPP pelo centro de custo
-router.get('/:id/despesas-opp', authMiddleware, authorize('PO','Coordenador','Diretoria','Leitura-Financeiro'), async (req, res, next) => {
+router.get('/:id/despesas-opp', authMiddleware, authorize('PO','Comercial','Financeiro','Coordenador','Diretoria','Leitura-Financeiro'), async (req, res, next) => {
   try {
     // Aceita centro de custo direto via query param (para importação sem salvar antes)
     let centroCusto = req.query.centroCusto || '';
@@ -1398,7 +1398,7 @@ router.get('/:id/despesas-opp', authMiddleware, authorize('PO','Coordenador','Di
 });
 
 // GET /api/planejamento/opp/ordens-servico — lista O.S. do OPP para pesquisa
-router.get('/opp/ordens-servico', authMiddleware, authorize('PO','Coordenador','Diretoria','Leitura-Financeiro'), async (req, res, next) => {
+router.get('/opp/ordens-servico', authMiddleware, authorize('PO','Comercial','Financeiro','Coordenador','Diretoria','Leitura-Financeiro'), async (req, res, next) => {
   try {
     const { oppRequest } = require('../services/oppService');
     const busca = (req.query.busca || '').toLowerCase().trim();
@@ -1425,7 +1425,7 @@ router.get('/opp/ordens-servico', authMiddleware, authorize('PO','Coordenador','
 });
 
 // GET /api/planejamento/:id/importar-os — importa terceirizados via número da O.S. no OPP
-router.get('/:id/importar-os', authMiddleware, authorize('PO','Coordenador','Diretoria','Leitura-Financeiro'), async (req, res, next) => {
+router.get('/:id/importar-os', authMiddleware, authorize('PO','Comercial','Financeiro','Coordenador','Diretoria','Leitura-Financeiro'), async (req, res, next) => {
   try {
     const { oppRequest } = require('../services/oppService');
 
@@ -1507,7 +1507,7 @@ router.get('/:id/importar-os', authMiddleware, authorize('PO','Coordenador','Dir
 });
 
 // POST /api/planejamento/calcular — calcula totais sem salvar (preview)
-router.post('/calcular', authMiddleware, authorize('PO','Coordenador','Diretoria'), async (req, res, next) => {
+router.post('/calcular', authMiddleware, authorize('PO','Comercial','Financeiro','Coordenador','Diretoria'), async (req, res, next) => {
   try {
     const totais = calcularTotais(req.body);
     res.json(totais);
@@ -1517,7 +1517,7 @@ router.post('/calcular', authMiddleware, authorize('PO','Coordenador','Diretoria
 });
 
 // POST /api/planejamento/:id/travar — trava o vínculo OPP pelo Nome do Centro de Custo
-router.post('/:id/travar', authMiddleware, authorize('PO','Coordenador','Diretoria'), async (req, res, next) => {
+router.post('/:id/travar', authMiddleware, authorize('PO','Comercial','Financeiro','Coordenador','Diretoria'), async (req, res, next) => {
   try {
     const plan = await db.findOne('Planejamentos', p => p.ID_Projeto === req.params.id);
     if (!plan) return res.status(404).json({ error: 'Planejamento não encontrado.' });
@@ -1584,7 +1584,7 @@ router.post('/:id/travar', authMiddleware, authorize('PO','Coordenador','Diretor
 });
 
 // POST /api/planejamento/:id/destravar — estorna o planejamento aprovado (com motivo)
-router.post('/:id/destravar', authMiddleware, authorize('PO','Coordenador','Diretoria'), async (req, res, next) => {
+router.post('/:id/destravar', authMiddleware, authorize('PO','Comercial','Financeiro','Coordenador','Diretoria'), async (req, res, next) => {
   try {
     const plan = await db.findOne('Planejamentos', p => p.ID_Projeto === req.params.id);
     if (!plan) return res.status(404).json({ error: 'Planejamento não encontrado.' });
@@ -1611,7 +1611,7 @@ router.post('/:id/destravar', authMiddleware, authorize('PO','Coordenador','Dire
 });
 
 // (rota migrar-baselines registrada no topo do arquivo, antes dos wildcards /:id)
-router.post('/migrar-baselines-dup', authMiddleware, authorize('PO','Coordenador','Diretoria'), async (req, res, next) => {
+router.post('/migrar-baselines-dup', authMiddleware, authorize('PO','Comercial','Financeiro','Coordenador','Diretoria'), async (req, res, next) => {
   try {
     if (!['Admin', 'Diretoria'].includes(req.user?.perfil)) {
       return res.status(403).json({ error: 'Sem permissão.' });
