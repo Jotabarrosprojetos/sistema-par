@@ -7,6 +7,7 @@ import {
   BanknotesIcon, KeyIcon, ClipboardDocumentListIcon, ClockIcon, PresentationChartLineIcon, ScaleIcon, DocumentChartBarIcon,
 } from '@heroicons/react/24/outline'
 import { useAuth } from '../../contexts/AuthContext'
+import { useTheme } from '../../contexts/ThemeContext'
 import { useAlerts } from '../../contexts/AlertContext'
 import { toast } from 'react-hot-toast'
 import api from '../../utils/api'
@@ -56,6 +57,20 @@ const W_EXPANDED  = 248
 export default function Sidebar() {
   const { user } = useAuth()
   const { unreadCount } = useAlerts()
+  const { isDark } = useTheme()
+  // Paleta da lateral nos dois temas (antes era tudo fixo em claro e ficava
+  // branca no tema escuro).
+  const S = isDark ? {
+    bg: '#1E293B', border: '#334155', strong: '#F1F5F9', muted: '#94A3B8', faint: '#64748B',
+    icon: '#64748B', divider: '#334155', hover: 'rgba(255,255,255,.05)', card: 'rgba(255,255,255,.03)',
+    cardBorder: 'rgba(255,255,255,.08)', cardHover: 'rgba(255,255,255,.07)', thumb: '#334155', thumbHover: '#475569',
+    activeText: '#22D3EE', shadow: 'rgba(0,0,0,.35)',
+  } : {
+    bg: '#ffffff', border: '#E8EFF5', strong: '#0E2748', muted: '#5E7899', faint: '#94AABE',
+    icon: '#8FA3BD', divider: '#E2E9F2', hover: 'rgba(14,39,72,.05)', card: 'rgba(14,39,72,.025)',
+    cardBorder: 'rgba(14,39,72,.07)', cardHover: 'rgba(14,39,72,.055)', thumb: '#D8E4EE', thumbHover: '#B7C9DC',
+    activeText: '#00879A', shadow: 'rgba(14,39,72,.12)',
+  }
   const [expanded, setExpanded] = useState(false)
   const [showSenhaModal, setShowSenhaModal] = useState(false)
   const [senhaForm, setSenhaForm] = useState({ senhaAtual: '', novaSenha: '', confirmar: '' })
@@ -85,12 +100,12 @@ export default function Sidebar() {
       <style>{`
         @keyframes pulse-dot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(.85)} }
         .par-link { text-decoration:none; display:flex; align-items:center; gap:10px; padding:7px 10px; border-radius:10px; position:relative; transition:background .16s,transform .16s; cursor:pointer; }
-        .par-link:not([aria-current="page"]):hover { background:rgba(14,39,72,.05) !important; transform:translateX(2px); }
+        .par-link:not([aria-current="page"]):hover { background:${S.hover} !important; transform:translateX(2px); }
         .par-nav::-webkit-scrollbar { width:4px; }
         .par-nav::-webkit-scrollbar-track { background:transparent; }
-        .par-nav::-webkit-scrollbar-thumb { background:#D8E4EE; border-radius:4px; }
-        .par-nav::-webkit-scrollbar-thumb:hover { background:#B7C9DC; }
-        .par-user-card:hover { background:rgba(14,39,72,.055) !important; border-color:rgba(14,39,72,.12) !important; }
+        .par-nav::-webkit-scrollbar-thumb { background:${S.thumb}; border-radius:4px; }
+        .par-nav::-webkit-scrollbar-thumb:hover { background:${S.thumbHover}; }
+        .par-user-card:hover { background:${S.cardHover} !important; border-color:${S.cardBorder} !important; }
       `}</style>
 
       {expanded && <div onClick={() => setExpanded(false)} style={{ position:'fixed', inset:0, zIndex:9 }} />}
@@ -102,12 +117,12 @@ export default function Sidebar() {
           width: expanded ? W_EXPANDED : W_COLLAPSED,
           display: 'flex', flexDirection: 'column',
           height: '100vh',
-          background: '#ffffff',
+          background: S.bg,
           position: 'fixed', top: 0, left: 0, zIndex: 20,
-          boxShadow: expanded ? '10px 0 30px rgba(14,39,72,.12)' : '2px 0 10px rgba(14,39,72,.05)',
+          boxShadow: expanded ? `10px 0 30px ${S.shadow}` : '2px 0 10px rgba(14,39,72,.05)',
           transition: 'width .26s cubic-bezier(.4,0,.2,1), box-shadow .26s ease',
           overflow: 'hidden',
-          borderRight: '1px solid #E8EFF5',
+          borderRight: `1px solid ${S.border}`,
         }}
       >
         {/* Logo area */}
@@ -125,13 +140,13 @@ export default function Sidebar() {
             opacity: expanded ? 1 : 0, transform: expanded ? 'translateX(0)' : 'translateX(-6px)',
             transition: 'opacity .2s, transform .2s', whiteSpace:'nowrap', textAlign:'center',
           }}>
-            <div style={{ fontSize:13.5, fontWeight:900, color:'#0E2748', letterSpacing:'.14em' }}>PAR</div>
-            <div style={{ fontSize:8.5, color:'#94AABE', letterSpacing:'.12em', textTransform:'uppercase', fontWeight:700, marginTop:2 }}>Jota Barros</div>
+            <div style={{ fontSize:13.5, fontWeight:900, color:S.strong, letterSpacing:'.14em' }}>PAR</div>
+            <div style={{ fontSize:8.5, color:S.faint, letterSpacing:'.12em', textTransform:'uppercase', fontWeight:700, marginTop:2 }}>Jota Barros</div>
           </div>
         </div>
 
         {/* Divider */}
-        <div style={{ height:1, background:'linear-gradient(90deg,transparent,#E2E9F2,transparent)', margin:'0 14px 10px', flexShrink:0 }} />
+        <div style={{ height:1, background:`linear-gradient(90deg,transparent,${S.divider},transparent)`, margin:'0 14px 10px', flexShrink:0 }} />
 
         {/* Nav groups */}
         <nav className="par-nav" style={{ flex:1, overflowY:'auto', overflowX:'hidden', padding:'0 8px', display:'flex', flexDirection:'column', gap:4 }}>
@@ -139,7 +154,7 @@ export default function Sidebar() {
             <div key={gi} style={{ marginBottom:4 }}>
               {/* Group label */}
               <div style={{
-                fontSize:9, fontWeight:800, color:'#94AABE', textTransform:'uppercase',
+                fontSize:9, fontWeight:800, color:S.faint, textTransform:'uppercase',
                 letterSpacing:'.13em', padding: gi === 0 ? '2px 10px 6px' : '10px 10px 6px',
                 opacity: expanded ? 1 : 0, transition:'opacity .18s',
                 whiteSpace:'nowrap', pointerEvents:'none',
@@ -157,7 +172,7 @@ export default function Sidebar() {
                       ? 'linear-gradient(90deg, rgba(0,181,204,.12), rgba(0,181,204,.02) 85%)'
                       : 'transparent',
                     boxShadow: isActive ? 'inset 0 0 0 1px rgba(0,181,204,.16)' : 'none',
-                    color: isActive ? '#00879A' : '#5E7899',
+                    color: isActive ? S.activeText : S.muted,
                   })}
                 >
                   {({ isActive }) => (
@@ -177,13 +192,13 @@ export default function Sidebar() {
                       }}>
                         <item.icon style={{
                           width:17, height:17,
-                          color: isActive ? '#00879A' : '#8FA3BD',
+                          color: isActive ? S.activeText : S.icon,
                           transition:'color .15s',
                         }} />
                       </div>
                       <span style={{
                         fontSize:12.5, fontWeight: isActive ? 700 : 500,
-                        color: isActive ? '#0E2748' : '#5E7899',
+                        color: isActive ? S.strong : S.muted,
                         whiteSpace:'nowrap', opacity: expanded ? 1 : 0,
                         transform: expanded ? 'translateX(0)' : 'translateX(-6px)',
                         transition:`opacity .2s ease ${expanded ? idx*18 : 0}ms, transform .2s ease ${expanded ? idx*18 : 0}ms`,
@@ -194,7 +209,7 @@ export default function Sidebar() {
                         <span style={{
                           position:'absolute', top:8, left:22,
                           width:6.5, height:6.5, borderRadius:'50%',
-                          background:'#EF4444', border:'1.5px solid #ffffff',
+                          background:'#EF4444', border:`1.5px solid ${S.bg}`,
                           boxShadow:'0 0 6px rgba(239,68,68,.6)',
                           animation:'pulse-dot 2s ease-in-out infinite',
                         }} />
@@ -215,7 +230,7 @@ export default function Sidebar() {
         </nav>
 
         {/* Bottom divider */}
-        <div style={{ height:1, background:'linear-gradient(90deg,transparent,#E2E9F2,transparent)', margin:'0 14px 10px', flexShrink:0 }} />
+        <div style={{ height:1, background:`linear-gradient(90deg,transparent,${S.divider},transparent)`, margin:'0 14px 10px', flexShrink:0 }} />
 
         {/* User */}
         <div style={{ padding:'0 8px 16px', flexShrink:0 }}>
@@ -225,7 +240,7 @@ export default function Sidebar() {
             style={{
               display:'flex', alignItems:'center', gap:10, padding:'8px',
               borderRadius:12, cursor:'pointer', transition:'background .16s, border-color .16s',
-              background:'rgba(14,39,72,.025)', border:'1px solid rgba(14,39,72,.07)',
+              background:S.card, border:`1px solid ${S.cardBorder}`,
             }}
           >
             <div style={{
@@ -233,7 +248,7 @@ export default function Sidebar() {
               background:'linear-gradient(135deg,#00C2D9,#0088A3)',
               display:'flex', alignItems:'center', justifyContent:'center',
               color:'#fff', fontWeight:900, fontSize:14,
-              boxShadow:'0 0 0 2px #ffffff, 0 0 0 3.5px rgba(0,181,204,.22), 0 3px 10px rgba(0,181,204,.28)',
+              boxShadow:`0 0 0 2px ${S.bg}, 0 0 0 3.5px rgba(0,181,204,.22), 0 3px 10px rgba(0,181,204,.28)`,
             }}>
               {(user?.nome || 'U')[0].toUpperCase()}
             </div>
@@ -244,10 +259,10 @@ export default function Sidebar() {
               transition:'opacity .2s ease 60ms,transform .2s ease 60ms',
               pointerEvents: expanded ? 'auto' : 'none',
             }}>
-              <div style={{ fontSize:12, fontWeight:700, color:'#0E2748', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:140 }}>
+              <div style={{ fontSize:12, fontWeight:700, color:S.strong, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', maxWidth:140 }}>
                 {user?.nome}
               </div>
-              <div style={{ fontSize:10, color:'#8FA3BD', display:'flex', alignItems:'center', gap:3, marginTop:1 }}>
+              <div style={{ fontSize:10, color:S.icon, display:'flex', alignItems:'center', gap:3, marginTop:1 }}>
                 <KeyIcon style={{ width:9, height:9 }} /> {user?.perfil} · alterar senha
               </div>
             </div>
@@ -258,10 +273,10 @@ export default function Sidebar() {
       {/* Modal senha */}
       {showSenhaModal && (
         <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,.5)', zIndex:9999, display:'flex', alignItems:'center', justifyContent:'center' }}>
-          <form onSubmit={alterarSenha} style={{ background:'#fff', borderRadius:16, padding:28, width:360, boxShadow:'0 20px 60px rgba(0,0,0,.2)' }}>
+          <form onSubmit={alterarSenha} style={{ background:S.bg, borderRadius:16, padding:28, width:360, boxShadow:'0 20px 60px rgba(0,0,0,.2)' }}>
             <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:20 }}>
               <KeyIcon style={{ width:20, height:20, color:'#0284C7' }} />
-              <h2 style={{ margin:0, fontSize:16, fontWeight:800, color:'#0F172A' }}>Alterar Senha</h2>
+              <h2 style={{ margin:0, fontSize:16, fontWeight:800, color:S.strong }}>Alterar Senha</h2>
             </div>
             <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
               {[{label:'Senha atual',key:'senhaAtual'},{label:'Nova senha',key:'novaSenha'},{label:'Confirmar nova senha',key:'confirmar'}].map(({label,key}) => (
@@ -274,7 +289,7 @@ export default function Sidebar() {
             </div>
             <div style={{ display:'flex', gap:10, marginTop:20 }}>
               <button type="button" className="press-feedback" onClick={() => { setShowSenhaModal(false); setSenhaForm({senhaAtual:'',novaSenha:'',confirmar:''}) }}
-                style={{ flex:1, padding:10, borderRadius:8, border:'1.5px solid #E2E8F0', background:'#fff', color:'#64748B', fontWeight:700, fontSize:13, cursor:'pointer' }}>
+                style={{ flex:1, padding:10, borderRadius:8, border:`1.5px solid ${S.border}`, background:'transparent', color:S.muted, fontWeight:700, fontSize:13, cursor:'pointer' }}>
                 Cancelar
               </button>
               <button type="submit" className="press-feedback" disabled={salvandoSenha}
