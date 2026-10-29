@@ -50,3 +50,64 @@
 /* Recharts */
 [data-theme="dark"] .recharts-cartesian-grid-horizontal line { stroke: #334155 !important; }
 [data-theme="dark"] .recharts-text tspan { fill: #64748B !important; }
+
+/* ── Telas com cores fixas de tema claro (estilo inline) ──
+   Varias telas (Comercial/OPP, Acompanhamento, Relatorios, Checklist, Alertas,
+   Importacao OPP, Relatorio Final e componentes de Planejamento) escrevem as
+   cores direto no style={{}} e nao conhecem o tema: no escuro ficavam cartoes
+   brancos e titulos escuros sobre fundo escuro (texto invisivel).
+   O navegador guarda o estilo inline normalizado em rgb(), entao da pra achar
+   esses elementos pelo atributo style e trocar so as cores neutras (branco,
+   cinzas claros, textos quase-pretos, bordas claras). Cores de status
+   (verde/amarelo/vermelho/roxo) nao sao tocadas. Escopo: area de conteudo
+   (main) e janelas modais — lateral e cabecalho ja tem tema proprio. */
+
+/* Fundos brancos / quase brancos -> superficie escura */
+[data-theme="dark"] :is(main, [role="dialog"]) :is(
+  [style*="background: rgb(255, 255, 255)"], [style*="background-color: rgb(255, 255, 255)"],
+  [style*="background: white"], [style*="background-color: white"],
+  .bg-white
+) { background: #1E293B !important; }
+
+[data-theme="dark"] :is(main, [role="dialog"]) :is(
+  [style*="background: rgb(248, 250, 252)"], [style*="background-color: rgb(248, 250, 252)"],
+  [style*="background: rgb(249, 250, 251)"], [style*="background-color: rgb(249, 250, 251)"],
+  [style*="background: rgb(241, 245, 249)"], [style*="background-color: rgb(241, 245, 249)"],
+  [style*="background: rgb(238, 243, 248)"], [style*="background-color: rgb(238, 243, 248)"],
+  .bg-slate-50, .bg-gray-50, .bg-slate-100, .bg-gray-100
+) { background: #0F172A !important; }
+
+/* Textos quase pretos / cinza-escuros -> claros */
+[data-theme="dark"] :is(main, [role="dialog"]) :is(
+  [style*="color: rgb(15, 23, 42)"], [style*="color: rgb(13, 27, 42)"], [style*="color: rgb(14, 39, 72)"],
+  [style*="color: rgb(17, 24, 39)"], [style*="color: rgb(30, 41, 59)"], [style*="color: rgb(0, 0, 0)"],
+  .text-slate-900, .text-gray-900, .text-slate-800, .text-gray-800
+) { color: #F1F5F9 !important; }
+
+[data-theme="dark"] :is(main, [role="dialog"]) :is(
+  [style*="color: rgb(51, 65, 85)"], [style*="color: rgb(55, 65, 81)"], [style*="color: rgb(71, 85, 105)"],
+  .text-slate-700, .text-gray-700, .text-slate-600, .text-gray-600
+) { color: #CBD5E1 !important; }
+
+/* Excecao: elemento com fundo escuro proprio que ganhou cor de texto clara
+   pela regra acima continua legivel; elemento cujo FUNDO e quase-preto nao
+   pode ter o fundo afetado (as regras acima so mexem em "color", e
+   "background-color: rgb(15, 23, 42)" tambem casa "color: rgb(15, 23, 42)"
+   — o resultado e texto claro sobre fundo escuro, que e o certo). */
+
+/* Bordas claras -> escuras */
+[data-theme="dark"] :is(main, [role="dialog"]) :is(
+  [style*="rgb(226, 232, 240)"], [style*="rgb(241, 245, 249)"], [style*="rgb(232, 239, 245)"],
+  [style*="rgb(216, 228, 238)"], [style*="rgb(203, 213, 225)"],
+  .border-slate-200, .border-gray-200, .border-slate-100, .border-gray-100
+) { border-color: #334155 !important; }
+
+/* Fundos de status claros (vermelho/amarelo/verde/roxo/azul bem clarinhos) ->
+   versao translucida escura da mesma cor. Sem isso, o texto escuro dentro
+   deles viraria claro (regra acima) sobre fundo claro. As cores de texto de
+   status (vermelho, verde etc.) continuam legiveis sobre o fundo escuro. */
+[data-theme="dark"] :is(main, [role="dialog"]) :is([style*="background: rgb(254, 242, 242)"], [style*="background-color: rgb(254, 242, 242)"], [style*="background: rgb(254, 226, 226)"], [style*="background-color: rgb(254, 226, 226)"]) { background: rgba(239, 68, 68, 0.14) !important; }
+[data-theme="dark"] :is(main, [role="dialog"]) :is([style*="background: rgb(255, 251, 235)"], [style*="background-color: rgb(255, 251, 235)"], [style*="background: rgb(254, 243, 199)"], [style*="background-color: rgb(254, 243, 199)"]) { background: rgba(245, 158, 11, 0.14) !important; }
+[data-theme="dark"] :is(main, [role="dialog"]) :is([style*="background: rgb(240, 253, 244)"], [style*="background-color: rgb(240, 253, 244)"], [style*="background: rgb(220, 252, 231)"], [style*="background-color: rgb(220, 252, 231)"]) { background: rgba(34, 197, 94, 0.14) !important; }
+[data-theme="dark"] :is(main, [role="dialog"]) :is([style*="background: rgb(245, 243, 255)"], [style*="background-color: rgb(245, 243, 255)"], [style*="background: rgb(237, 233, 254)"], [style*="background-color: rgb(237, 233, 254)"]) { background: rgba(139, 92, 246, 0.16) !important; }
+[data-theme="dark"] :is(main, [role="dialog"]) :is([style*="background: rgb(239, 246, 255)"], [style*="background-color: rgb(239, 246, 255)"], [style*="background: rgb(219, 234, 254)"], [style*="background-color: rgb(219, 234, 254)"], [style*="background: rgb(236, 254, 255)"], [style*="background-color: rgb(236, 254, 255)"]) { background: rgba(59, 130, 246, 0.14) !important; }
