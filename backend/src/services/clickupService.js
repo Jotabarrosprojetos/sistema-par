@@ -1161,17 +1161,19 @@ async function syncTerceirizadosClickUp() {
       !LISTAS_EXCLUIR.some(kw => l.name?.toLowerCase().includes(kw))
     );
     console.log(`[ClickUp Terc] Listas filtradas: ${lists.map(l => l.name).join(', ')}`);
+    // getTasks(listId) ja percorre TODAS as paginas e ignora qualquer argumento
+    // de pagina. Antes havia aqui um segundo laco de paginas em volta dele:
+    // como as listas tem >100 tarefas, a condicao de parada nunca batia e a
+    // lista inteira era baixada de novo sem fim, acumulando em allTasks ate
+    // estourar a memoria (4GB) e derrubar o servidor a cada ~2h. Causa real do
+    // OOM no Railway, achada em 29/10/2026.
     const allTasks = [];
     for (const list of lists) {
-      let page = 0;
-      while (true) {
-        const tasks = await getTasks(list.id, page);
-        tasks.forEach(t => { t._listName = list.name; });
-        allTasks.push(...tasks);
-        if (tasks.length < 100) break;
-        page++;
-      }
+      const tasks = await getTasks(list.id);
+      tasks.forEach(t => { t._listName = list.name; });
+      allTasks.push(...tasks);
     }
+    console.log(`[ClickUp Terc] ${allTasks.length} tarefas lidas de ${lists.length} listas.`);
 
     const existentes = await db.readSheet('Terceirizados');
     const projetos = await db.readSheet('Projetos_Contratos');
@@ -1186,6 +1188,9 @@ async function syncTerceirizadosClickUp() {
 
     const porTaskId = Object.fromEntries(existentes.filter(r => r.ID_Tarefa_ClickUp).map(r => [r.ID_Tarefa_ClickUp, r]));
 
+    // Varias tarefas de terceirizados apontam pra mesma tarefa de projeto:
+    // busca cada tarefa ligada uma vez so por sync.
+    const linkedCache = new Map();
     let atualizados = 0, criados = 0;
     for (const task of allTasks) {
       // Extrai "Ordem de Compra" — só o número (remove prefixo "OC " se existir)
@@ -1217,7 +1222,11 @@ async function syncTerceirizadosClickUp() {
       const linkedTaskId = task.linked_tasks?.[0]?.task_id || '';
       if (linkedTaskId) {
         try {
-          const linked = await getTaskById(linkedTaskId);
+          if (!linkedCache.has(linkedTaskId)) {
+            const lt = await getTaskById(linkedTaskId);
+            linkedCache.set(linkedTaskId, { list: { id: lt?.list?.id }, folder: { id: lt?.folder?.id } });
+          }
+          const linked = linkedCache.get(linkedTaskId);
           const listIdLinked = linked?.list?.id;
           const folderIdLinked = linked?.folder?.id;
           const projLinked = (listIdLinked && projetoByClickUp[listIdLinked]) || (folderIdLinked && projetoByClickUp[folderIdLinked]);
