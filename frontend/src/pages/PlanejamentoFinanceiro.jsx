@@ -16,6 +16,58 @@ const fmt = (v) => new Intl.NumberFormat("pt-BR", { style: "currency", currency:
 const fmtN = (v, dec = 1) => Number(v || 0).toFixed(dec)
 // Aceita vírgula ou ponto como separador decimal (formato BR ou EN)
 const parseBR = (v) => parseFloat(String(v || 0).replace(/\./g, '').replace(',', '.')) || 0
+
+// Sincroniza valor e percentual das medicoes com o Valor do Contrato e fecha os
+// centavos de arredondamento na ULTIMA medicao (30/10/2026). Antes o valor era
+// sempre refeito a partir do percentual com 2 casas: 13 percentuais arredondados
+// somavam 99,99% e a soma dos valores ficava R$ 48,48 abaixo do contrato
+// (SAN-24-SIAA Santana) — o save era bloqueado mesmo com os valores salvos
+// batendo certinho com o contrato.
+// Regras:
+//  - Se os valores ja somam o contrato (diferenca <= R$ 0,05), eles mandam:
+//    so recalcula os percentuais a partir deles.
+//  - Senao (ex.: contrato mudou), o percentual manda: valor = contrato x %.
+//  - Nos dois casos, se a soma ficar perto do total (100% / contrato, folga de
+//    arredondamento), a ultima medicao absorve a diferenca e a soma fecha exata.
+//    Se estiver longe (medicoes incompletas), nada e forcado.
+const paraBR = (n) => (Math.round(n * 100) / 100).toFixed(2).replace('.', ',')
+function sincronizarMedicoes(medicoes, vc) {
+  const lista = medicoes || []
+  if (!(vc > 0) || lista.length === 0) return lista
+  const cent = (n) => Math.round(n * 100)
+  const vcC = cent(vc)
+  const temVal = (m) => parseBR(m.valor) > 0
+  const temPerc = (m) => parseBR(m.percentual) > 0
+  const somaValC = lista.reduce((s, m) => s + cent(parseBR(m.valor)), 0)
+  const valoresMandam = lista.every(m => temVal(m) || !temPerc(m)) && Math.abs(somaValC - vcC) <= 5
+
+  let out = lista.map(m => {
+    if (valoresMandam) {
+      return temVal(m) ? { ...m, percentual: paraBR(parseBR(m.valor) / vc * 100) } : m
+    }
+    if (temPerc(m)) return { ...m, valor: paraBR(parseBR(m.percentual) * vc / 100) }
+    if (temVal(m)) return { ...m, percentual: paraBR(parseBR(m.valor) / vc * 100) }
+    return m
+  })
+
+  // indice da ultima medicao que tem valor (e recebe o resto do arredondamento)
+  let ult = -1
+  out.forEach((m, i) => { if (temVal(m) || temPerc(m)) ult = i })
+  if (ult < 0) return out
+
+  const vals = out.map(m => cent(parseBR(m.valor)))
+  const restoValC = vcC - vals.reduce((a, b) => a + b, 0)
+  // folga: ate 1 centavo por medicao + 0,05% do contrato
+  if (restoValC !== 0 && Math.abs(restoValC) <= lista.length + Math.max(5, Math.round(vcC * 0.0005))) {
+    out[ult] = { ...out[ult], valor: paraBR((vals[ult] + restoValC) / 100) }
+  }
+  const percs = out.map(m => Math.round(parseBR(m.percentual) * 100))
+  const restoPerc = 10000 - percs.reduce((a, b) => a + b, 0)
+  if (restoPerc !== 0 && Math.abs(restoPerc) <= lista.length + 5) {
+    out[ult] = { ...out[ult], percentual: paraBR((percs[ult] + restoPerc) / 100) }
+  }
+  return out
+}
 const fmtH = (h) => {
   const total = Math.round((h || 0) * 60)
   const hh = Math.floor(total / 60)
@@ -465,8 +517,9 @@ export default function PlanejamentoFinanceiro() {
     if (!v.dataEntregaPlanejada?.trim()) faltando.push("Data Entrega Planejada")
     if (!(v.medicoes?.length > 0))       faltando.push("Pelo menos 1 Medição")
     if (v.medicoes?.length > 0) {
-      const somaPerc = (v.medicoes || []).reduce((s, m) => s + parseBR(m.percentual), 0)
-      if (Math.abs(somaPerc - 100) > 0.01) faltando.push(`Soma das medições deve ser 100% (atual: ${fmtN(somaPerc, 2)}%)`)
+      // Confere ja com os centavos de arredondamento fechados (ver sincronizarMedicoes)
+      const somaPerc = sincronizarMedicoes(v.medicoes, parseBR(v.valorContrato)).reduce((s, m) => s + parseBR(m.percentual), 0)
+      if (Math.abs(somaPerc - 100) > 0.011) faltando.push(`Soma das medições deve ser 100% (atual: ${fmtN(somaPerc, 2)}%)`)
     }
     return faltando
   }
@@ -495,18 +548,7 @@ export default function PlanejamentoFinanceiro() {
     // Percentual é a referência (é o que soma 100% na validação acima);
     // valor é sempre recalculado a partir dele quando presente.
     const vcAtual = parseBR(form.valorContrato)
-    const medicoesSincronizadas = (form.medicoes || []).map(m => {
-      if (vcAtual <= 0) return m
-      const hasPerc = m.percentual && parseBR(m.percentual) > 0
-      const hasVal = m.valor && parseBR(m.valor) > 0
-      if (hasPerc) {
-        return { ...m, valor: fmtN(parseBR(m.percentual) * vcAtual / 100, 2).replace('.', ',') }
-      }
-      if (hasVal) {
-        return { ...m, percentual: fmtN(parseBR(m.valor) / vcAtual * 100, 2).replace('.', ',') }
-      }
-      return m
-    })
+    const medicoesSincronizadas = sincronizarMedicoes(form.medicoes, vcAtual)
     if (medicoesSincronizadas.some((m, i) => m.valor !== form.medicoes[i]?.valor || m.percentual !== form.medicoes[i]?.percentual)) {
       setForm(prev => ({ ...prev, medicoes: medicoesSincronizadas }))
     }
