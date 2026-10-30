@@ -141,6 +141,11 @@ async function ensureSheetsExist() {
     `CREATE INDEX IF NOT EXISTS "idx_alertas_projeto" ON "Alertas" ("ID_Projeto")`,
     // ── Colunas extras adicionadas após criação inicial ──────────────────────
     `ALTER TABLE "Planejamentos" ADD COLUMN IF NOT EXISTS "Nr_OS_OPP" TEXT`,
+    // Vinculo confirmado com o centro de custo do OPP. Existia no Supabase (criada
+    // por script avulso), mas nao estava aqui e por isso nao veio na migracao pro
+    // Neon (22/10/2026): todo salvamento de planejamento passou a falhar com
+    // 'column "ID_Centro_Custo_OPP" does not exist'. Recriada em 30/10/2026.
+    `ALTER TABLE "Planejamentos" ADD COLUMN IF NOT EXISTS "ID_Centro_Custo_OPP" TEXT`,
     `ALTER TABLE "Planejamentos" ADD COLUMN IF NOT EXISTS "Data_OS_Externa" TEXT`,
     `ALTER TABLE "Planejamentos" ADD COLUMN IF NOT EXISTS "Travado" TEXT`,
     `ALTER TABLE "Planejamentos" ADD COLUMN IF NOT EXISTS "Travado_Em" TEXT`,
