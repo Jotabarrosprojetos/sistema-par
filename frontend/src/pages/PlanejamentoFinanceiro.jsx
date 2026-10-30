@@ -452,7 +452,10 @@ export default function PlanejamentoFinanceiro() {
   const tercOk = itensTerc25.length === 0
   const prodOk = par.custoProducaoPerc <= 30
   const despGeraisOk = par.percDespesasGerais <= 7.5
-  const somaMedicoes = (form.medicoes || []).reduce((s, m) => s + parseBR(m.percentual), 0)
+  // Mesma conta do save (centavos de arredondamento fechados na ultima medicao),
+  // arredondada a 2 casas: o selo "N etapas · X%" e o aviso "somam 100%" sempre
+  // mostram o mesmo numero (antes um dizia 99,99% e o outro "100%").
+  const somaMedicoes = Math.round(sincronizarMedicoes(form.medicoes, parseBR(form.valorContrato)).reduce((s, m) => s + parseBR(m.percentual), 0) * 100) / 100
 
   const projetoSelecionado = projetos.find(p => p.ID_Projeto === projetoId)
 
@@ -1620,11 +1623,11 @@ export default function PlanejamentoFinanceiro() {
           </Section>
 
           {/* Seção 3: Medições */}
-          <Section title="Cronograma de Medições" open={sections.medicoes} onToggle={() => toggle("medicoes")} badge={`${form.medicoes.length} etapas · ${fmtN(somaMedicoes, 2)}%`}>
+          <Section title="Cronograma de Medições" open={sections.medicoes} onToggle={() => toggle("medicoes")} badge={`${form.medicoes.length} etapas · ${fmtN(somaMedicoes, 2).replace('.', ',')}%`}>
             <div style={{ marginTop: 16 }}>
               {somaMedicoes > 0 && (
-                <div style={{ marginBottom: 10, fontSize: 12, fontWeight: 700, color: Math.abs(somaMedicoes - 100) < 0.01 ? "#15803D" : "#DC2626" }}>
-                  {Math.abs(somaMedicoes - 100) < 0.01 ? "✓ Medições somam 100%" : `⚠ Medições somam ${fmtN(somaMedicoes, 2)}% (necessário 100% para aprovação)`}
+                <div style={{ marginBottom: 10, fontSize: 12, fontWeight: 700, color: somaMedicoes === 100 ? "#15803D" : "#DC2626" }}>
+                  {somaMedicoes === 100 ? "✓ Medições somam 100%" : `⚠ Medições somam ${fmtN(somaMedicoes, 2).replace('.', ',')}% (necessário 100% para aprovação)`}
                 </div>
               )}
               {(form.medicoes || []).map((m, i) => {
