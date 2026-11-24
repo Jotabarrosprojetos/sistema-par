@@ -66,6 +66,15 @@ test('arredondar e somarDinheiro', () => {
   assert.equal(somarDinheiro([]), 0);
 });
 
+test('arredondar nao quebra com notacao cientifica (numeros minusculos ou enormes)', () => {
+  assert.equal(arredondar(4.44e-17), 0);
+  assert.equal(arredondar(-1e-10), 0);
+  assert.equal(arredondar(0.30000000000000004 - 0.3), 0);
+  assert.equal(arredondar(1e21), 1e21);
+  assert.equal(formatarBR(1e-10), '0,00');
+  assert.equal(somarDinheiro([1e-10, 0.1]), 0.1);
+});
+
 test('formatarBR e formatarMoeda, e a ida e volta nao muda o valor', () => {
   assert.equal(formatarBR(1234.5), '1.234,50');
   assert.equal(formatarBR(0), '0,00');

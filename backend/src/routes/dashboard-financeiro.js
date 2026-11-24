@@ -1,5 +1,6 @@
 const express = require('express');
 const { parseDinheiro } = require('../utils/dinheiro');
+const { abaterRecebido } = require('../utils/receber');
 const { authMiddleware } = require('../middleware/auth');
 const db = process.env.USE_POSTGRES === 'true' ? require('../services/postgresService') : require('../services/googleSheetsService');
 
@@ -197,6 +198,20 @@ router.get('/', async (req, res, next) => {
         if (!info) return;
         recebidoOPPPorProjeto[info.idProjeto] = (recebidoOPPPorProjeto[info.idProjeto] || 0) + parseFloat(r.valor_rec || 0);
       });
+
+    // A receber e em atraso com o OPP como dono do realizado (decisao do Beto, 24/11/2026).
+    // O planejamento do Par segue dono da PREVISAO (valor e data de cada medicao); o que o OPP ja
+    // recebeu de cada projeto abate as medicoes dele, das mais antigas para as mais novas. Antes a
+    // soma de todas as medicoes planejadas valia como "a receber", mesmo as ja recebidas, porque a
+    // situacao das medicoes vindas do JSON do baseline era sempre "Pendente". Ver utils/receber.js.
+    const recebidoParaAbater = {};
+    todasMedicoes.forEach(m => {
+      const id = m.idProjeto;
+      if (id !== undefined && recebidoParaAbater[id] === undefined) {
+        recebidoParaAbater[id] = recebidoMedicoesPorProjeto[id] || recebidoOPPPorProjeto[id] || 0;
+      }
+    });
+    const abatimento = abaterRecebido(todasMedicoes, recebidoParaAbater);
 
     function setorDaReceita(rec) {
       const info = infoProjetoDeReceita(rec);
@@ -416,6 +431,8 @@ router.get('/', async (req, res, next) => {
         totalCarteira:  Math.round(totalCarteira),
         totalRecebido:  Math.round(totalRecebido),
         totalAReceber:  Math.round(totalAReceber),
+        aReceberPrevisto: Math.round(abatimento.previsto), // soma das medicoes planejadas ainda nao recebidas, antes de abater o OPP
+        abatidoPeloOPP:   Math.round(abatimento.abatido),  // quanto do previsto o OPP ja recebeu
         totalAtrasado:  Math.round(totalAtrasado),
         qtdAprovados:   aprovados.length,
       },

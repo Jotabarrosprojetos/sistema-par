@@ -94,7 +94,10 @@ function arredondar(n, casas = 2) {
   const x = Number(n);
   if (!Number.isFinite(x)) return 0;
   const sinal = x < 0 ? -1 : 1;
-  const r = Number(`${Math.round(Number(`${Math.abs(x)}e${casas}`))}e-${casas}`);
+  const txt = String(Math.abs(x));
+  // Numeros em notacao cientifica (4e-17 ou 1e21) quebrariam a conta com 'e': muito pequeno vira 0, muito grande fica como esta.
+  if (/e/i.test(txt)) return Math.abs(x) < 1 ? 0 : x;
+  const r = Number(`${Math.round(Number(`${txt}e${casas}`))}e-${casas}`);
   return sinal * r;
 }
 
