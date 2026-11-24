@@ -17,6 +17,7 @@ const path = require('path');
 const { initWebSocket } = require('./src/services/websocketService');
 const { syncClickUp } = require('./src/services/clickupService');
 const { checkAllAlerts } = require('./src/services/alertService');
+const { verificarMudancasDeData } = require('./src/services/mudancasDeDataService');
 const errorHandler = require('./src/middleware/errorHandler');
 
 // Rotas
@@ -172,6 +173,11 @@ cron.schedule('0 8 * * 1-5', async () => {
   try {
     console.log('[CRON] Verificação diária de alertas...');
     await checkAllAlerts();
+    // Aviso de datas de recebimento divergentes (so leitura do OPP; um alerta resumo para o financeiro)
+    try {
+      const r = await verificarMudancasDeData(db);
+      console.log(`[CRON] Mudanças de data: ${r.divergentes} divergente(s)${r.criado ? ', alerta criado' : ''}.`);
+    } catch (e) { console.error('[CRON] Erro no aviso de mudanças de data:', e.message); }
   } catch (err) {
     console.error('[CRON] Erro na verificação de alertas:', err.message);
   }

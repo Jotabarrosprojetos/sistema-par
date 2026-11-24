@@ -1,7 +1,7 @@
 // Testes do detector de mudanca de data de recebimento. Sem banco, sem rede: node --test
 const test = require('node:test');
 const assert = require('node:assert');
-const { lerData, compararDatas, casar, detectarMudancasDeData, PRAZO_DIAS } = require('../src/utils/datasRecebimento');
+const { lerData, compararDatas, casar, detectarMudancasDeData, classificarSemTitulo, classificarSemMedicao, PRAZO_DIAS } = require('../src/utils/datasRecebimento');
 
 test('lerData aceita ISO e DD/MM/AAAA e devolve null para lixo', () => {
   assert.equal(lerData('2026-12-09').getDate(), 9);
@@ -88,4 +88,24 @@ test('detectarMudancasDeData: lista de ajustes so com as divergentes, do maior d
   assert.equal(r.ajustes[0].vencimentoSugerido, '2026-10-14'); // 14/09 + 30 dias
   assert.equal(r.ajustes[1].sentido, 'opp_antes');
   assert.equal(PRAZO_DIAS, 30);
+});
+
+test('classificarSemTitulo: recebida, a vencer, vencida e sem vinculo', () => {
+  const hoje = new Date(2026, 10, 24);
+  const m = (valor, data, chave) => ({ valor, dataPrevisao: data, chave });
+  const pagos = [{ valor: 150583.96, chave: '10' }];
+  assert.equal(classificarSemTitulo(m(150583, '2026-07-03', '10'), { pagos, hoje }), 'recebida_no_opp');
+  assert.equal(classificarSemTitulo(m(150583, '2026-07-03', '99'), { pagos, hoje }), 'vencida_sem_titulo'); // outro centro de custo
+  assert.equal(classificarSemTitulo(m(5000, '2027-01-10', '10'), { pagos, hoje }), 'a_vencer_sem_titulo');
+  assert.equal(classificarSemTitulo(m(5000, '2026-11-24', '10'), { pagos, hoje }), 'a_vencer_sem_titulo'); // hoje conta como a vencer
+  assert.equal(classificarSemTitulo(m(5000, '2026-11-23', '10'), { pagos, hoje }), 'vencida_sem_titulo');
+  assert.equal(classificarSemTitulo(m(5000, '2026-11-23', undefined), { pagos, temVinculo: false, hoje }), 'sem_vinculo_com_opp');
+  assert.equal(classificarSemTitulo(m(5000, '', '10'), { pagos, hoje }), 'sem_data');
+});
+
+test('classificarSemMedicao: sem centro de custo, sem planejamento aprovado e medicao nao planejada', () => {
+  const chavesComPlano = new Set(['10', '20']);
+  assert.equal(classificarSemMedicao({ chave: undefined }, { chavesComPlano }), 'sem_centro_de_custo');
+  assert.equal(classificarSemMedicao({ chave: '77' }, { chavesComPlano }), 'sem_planejamento_aprovado');
+  assert.equal(classificarSemMedicao({ chave: '10' }, { chavesComPlano }), 'medicao_nao_planejada');
 });

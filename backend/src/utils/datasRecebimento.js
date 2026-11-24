@@ -115,4 +115,34 @@ function detectarMudancasDeData(medicoes, titulos, opcoes = {}) {
   };
 }
 
-module.exports = { PRAZO_DIAS, TOLERANCIA_DIAS, lerData, compararDatas, casar, detectarMudancasDeData };
+/**
+ * Motivo provavel de uma medicao do Par SEM titulo aberto no OPP.
+ *  - recebida_no_opp: ha titulo PAGO no OPP com o mesmo valor (e a mesma chave, quando existe): ja foi recebida;
+ *  - a_vencer_sem_titulo: a data planejada ainda nao passou e nao ha titulo: o OPP ainda nao lancou;
+ *  - vencida_sem_titulo: a data planejada passou, nao ha titulo aberto nem pago: conferir (nao lancada, valor diferente ou ligacao ausente);
+ *  - sem_vinculo_com_opp: o planejamento nao tem centro de custo nem O.S. do OPP, entao nem da para procurar.
+ */
+function classificarSemTitulo(medicao, { pagos = [], temVinculo = true, hoje = new Date() } = {}) {
+  if (!temVinculo) return 'sem_vinculo_com_opp';
+  const achou = pagos.some((t) => Math.abs(t.valor - medicao.valor) <= TOLERANCIA_VALOR
+    && (!t.chave || !medicao.chave || String(t.chave) === String(medicao.chave)));
+  if (achou) return 'recebida_no_opp';
+  const d = lerData(medicao.dataPrevisao);
+  if (!d) return 'sem_data';
+  const h = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+  return d >= h ? 'a_vencer_sem_titulo' : 'vencida_sem_titulo';
+}
+
+/**
+ * Motivo provavel de um titulo aberto do OPP SEM medicao aprovada no Par.
+ *  - sem_centro_de_custo: o titulo nao tem centro de custo (lancamento de tesouraria, ajuste ou titulo antigo);
+ *  - sem_planejamento_aprovado: o centro de custo do titulo nao pertence a nenhum planejamento aprovado;
+ *  - medicao_nao_planejada: o projeto tem planejamento aprovado, mas nenhuma medicao dele tem esse valor.
+ */
+function classificarSemMedicao(titulo, { chavesComPlano = new Set() } = {}) {
+  if (!titulo.chave) return 'sem_centro_de_custo';
+  if (!chavesComPlano.has(String(titulo.chave))) return 'sem_planejamento_aprovado';
+  return 'medicao_nao_planejada';
+}
+
+module.exports = { PRAZO_DIAS, TOLERANCIA_DIAS, lerData, compararDatas, casar, detectarMudancasDeData, classificarSemTitulo, classificarSemMedicao };
