@@ -145,7 +145,8 @@ function gerarRelatorio(dados) {
     '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px">'+
     kpiCard('Carteira Aprovada', fV(kpis.totalCarteira), '#7C3AED', kpis.qtdAprovados+' projeto(s) aprovado(s)')+
     kpiCard('Total Recebido', fV(kpis.totalRecebido), '#16A34A', fN(percRecebido)+'% da carteira')+
-    kpiCard('A Receber', fV(kpis.totalAReceber), '#2563EB', '')+
+    kpiCard('A Receber (previsto)', fV(kpis.totalAReceber), '#2563EB', 'planejamento menos o recebido do OPP')+
+    (dados.lancadoOPP != null ? kpiCard('A Receber lançado no OPP', fV(dados.lancadoOPP), '#0EA5E9', 'títulos em aberto no OPP, por projeto') : '')+
     kpiCard('Em Atraso', fV(kpis.totalAtrasado), kpis.totalAtrasado>0?'#DC2626':'#16A34A', kpis.totalAtrasado>0?'Medições vencidas':'Sem inadimplência')+
     '</div>'+
 
@@ -205,6 +206,7 @@ export default function DashboardFinanceiro() {
   }
 
   const [dados, setDados] = useState(null)
+  const [lancadoOPP, setLancadoOPP] = useState(null)
   const [loading, setLoading] = useState(true)
 
   async function carregar() {
@@ -212,6 +214,10 @@ export default function DashboardFinanceiro() {
     try {
       const { data } = await api.get("/dashboard-financeiro")
       setDados(data)
+      // A receber lançado no OPP: mesma conta da tela inicial (Baseline x Real, títulos em aberto do OPP por projeto aprovado)
+      api.get("/baseline-real")
+        .then(r => setLancadoOPP((r.data?.projetos || []).reduce((s, p) => s + (p.totalPendente || 0), 0)))
+        .catch(() => setLancadoOPP(null))
     } catch (e) {
       console.error(e)
     } finally {
@@ -241,7 +247,7 @@ export default function DashboardFinanceiro() {
         <span style={{ fontWeight: 900, fontSize: 18, color: T.text1, textTransform: "uppercase", letterSpacing: "0.06em", flex: 1 }}>
           Dashboard Financeiro
         </span>
-        <button className="press-feedback" onClick={() => gerarRelatorio(dados)}
+        <button className="press-feedback" onClick={() => gerarRelatorio({ ...dados, lancadoOPP })}
           style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 8, border: "1.5px solid #C4B5FD", background: "#F5F3FF", color: "#7C3AED", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>
           <Download size={14} /> Gerar Relatório PDF
         </button>
@@ -255,7 +261,8 @@ export default function DashboardFinanceiro() {
       <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginBottom: 24 }}>
         <KPI label="Carteira Aprovada"  value={fmtR(kpis.totalCarteira)}  icon={DollarSign}    cor="#7C3AED" sub={`${kpis.qtdAprovados} projeto(s) aprovado(s)`} />
         <KPI label="Total Recebido"     value={fmtR(kpis.totalRecebido)}  icon={CheckCircle}   cor="#16A34A" sub={`${kpis.totalCarteira > 0 ? fmtN(kpis.totalRecebido / kpis.totalCarteira * 100) : 0}% da carteira`} />
-        <KPI label="A Receber"          value={fmtR(kpis.totalAReceber)}  icon={Clock}         cor="#2563EB" />
+        <KPI label="A Receber (previsto)" value={fmtR(kpis.totalAReceber)}  icon={Clock}         cor="#2563EB" sub="planejamento menos o recebido do OPP" />
+        {lancadoOPP !== null && <KPI label="A Receber lançado no OPP" value={fmtR(lancadoOPP)} icon={Clock} cor="#0EA5E9" sub="títulos em aberto no OPP, por projeto" />}
         <KPI label="Em Atraso"          value={fmtR(kpis.totalAtrasado)}  icon={AlertTriangle} cor="#DC2626" ok={kpis.totalAtrasado === 0} sub={kpis.totalAtrasado > 0 ? "Medições vencidas não recebidas" : "Sem inadimplência"} />
       </div>
 

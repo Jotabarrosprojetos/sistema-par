@@ -370,6 +370,7 @@ export default function Dashboard() {
   const [alertas, setAlertas] = useState([])
   const [oppStatus, setOppStatus] = useState(null)
   const [totalRecebidoOPP, setTotalRecebidoOPP] = useState(null)
+  const [aReceberPrevisto, setAReceberPrevisto] = useState(null)
   const [baselineReal, setBaselineReal] = useState(null)
   const [loading, setLoading] = useState(true)
   const [mostrarTodosSaude, setMostrarTodosSaude] = useState(false)
@@ -391,7 +392,7 @@ export default function Dashboard() {
       if (rA.status === 'fulfilled') setAlertas(rA.value.data?.alertas || rA.value.data || [])
       if (rM.status === 'fulfilled') setMedicoes(rM.value.data?.medicoes || rM.value.data || [])
       api.get('/opp/status').then(r => setOppStatus(r.data)).catch(() => setOppStatus({ ok: false }))
-      api.get('/dashboard-financeiro').then(r => setTotalRecebidoOPP(r.data?.kpis?.totalRecebido ?? null)).catch(() => {})
+      api.get('/dashboard-financeiro').then(r => { setTotalRecebidoOPP(r.data?.kpis?.totalRecebido ?? null); setAReceberPrevisto(r.data?.kpis?.totalAReceber ?? null) }).catch(() => {})
       // Baseline x Real já traz, por projeto, o quanto falta receber calculado
       // direto do OPP (pelo centro de custo confirmado) — fonte mais confiável
       // que recalcular do zero aqui.
@@ -752,7 +753,7 @@ export default function Dashboard() {
           <StatCard label="Projetos em Andamento" value={emAndamento.length} sub={`de ${projetosFiltrados.length} ativos (outros em backlog, pendência, aguardando faturamento etc.)`} icon={<FolderOpen size={20} />} bg="#22C55E" onClick={() => navigate('/projetos')} />
           <StatCard label="Carteira Aprovada" value={fmt(totalContrato)} sub={`${aprovados.length} planejamento(s) aprovado(s)`} icon={<Briefcase size={20} />} bg="#EF4444" />
           <StatCard label="Total a Pagar" value={fmt(totalAPagar)} sub="custo total dos planejamentos aprovados" icon={<CheckCircle2 size={20} />} bg="#0EA5E9" />
-          <StatCard label="A Receber" value={fmt(totalAReceber)} sub="medições pendentes/em andamento" icon={<BadgeDollarSign size={20} />} bg="#F59E0B"
+          <StatCard label="A Receber lançado no OPP" value={fmt(totalAReceber)} sub={aReceberPrevisto !== null ? `títulos em aberto no OPP · previsto pelo planejamento: ${fmt(aReceberPrevisto)}` : 'títulos em aberto no OPP, por projeto'} icon={<BadgeDollarSign size={20} />} bg="#F59E0B"
             onClick={() => navigate('/medicoes')} />
         </div>
       )}
