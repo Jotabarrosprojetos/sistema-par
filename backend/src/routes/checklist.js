@@ -1,4 +1,5 @@
 const express = require('express');
+const { parseDinheiro } = require('../utils/dinheiro');
 const db = process.env.USE_POSTGRES === 'true' ? require('../services/postgresService') : require('../services/googleSheetsService');
 const { authMiddleware } = require('../middleware/auth');
 
@@ -16,7 +17,7 @@ const CAMPOS_CRITICOS = [
 ];
 
 const isProjetoReal = (p) =>
-  parseFloat(p.Valor_Global || 0) > 0 || (p.Nr_Contrato && String(p.Nr_Contrato).trim() !== '');
+  parseDinheiro(p.Valor_Global) > 0 || (p.Nr_Contrato && String(p.Nr_Contrato).trim() !== '');
 
 const isEmpty = (val, tipo) => {
   if (tipo === 'numero') return !val || parseFloat(val) === 0;
@@ -95,7 +96,7 @@ router.get('/', async (req, res, next) => {
         cliente: p.Cliente || '—',
         setor: p.Setor || '—',
         status: p.Status,
-        valorGlobal: parseFloat(p.Valor_Global || 0),
+        valorGlobal: parseDinheiro(p.Valor_Global),
         camposFaltando,
         problemasPlanejamento,
         medsSemOC,

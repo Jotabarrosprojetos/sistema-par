@@ -5,6 +5,7 @@ import api from '../utils/api'
 import { formatDate, formatBRL, parseBRL } from '../utils/formatters'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import { useTheme } from '../contexts/ThemeContext'
+import { parseDinheiro } from '../utils/dinheiro'
 
 const WORKFLOW_STEPS = [
   'Backlog', 'Autorizado', 'Em Negociação', 'Ordem de Compra',
@@ -562,7 +563,7 @@ function TerceirizadoModal({ item, projetos, onClose, onSaved }) {
               </select>
               {projetoSel && (
                 <div style={{ marginTop: 6, fontSize: 12, color: "#7C3AED", fontWeight: 600 }}>
-                  Valor do contrato: {Number(projetoSel.Valor_Global || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  Valor do contrato: {parseDinheiro(projetoSel.Valor_Global).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                 </div>
               )}
             </div>

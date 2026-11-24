@@ -57,7 +57,7 @@ router.get('/', async (req, res, next) => {
       const horas = logHoras.filter((l) => l.ID_Projeto === p.ID_Projeto);
 
       const valorGlobal = pBR(p.Valor_Global || 0);
-      const totalTerceiros = tercs.reduce((s, t) => s + parseFloat(t.Valor_Contratado || 0), 0);
+      const totalTerceiros = tercs.reduce((s, t) => s + parseDinheiro(t.Valor_Contratado), 0);
       const percTerceiros = valorGlobal > 0 ? (totalTerceiros / valorGlobal) * 100 : 0;
 
       const medicoesConcluidas = meds.filter((m) => m.Status_Financeiro === 'Recebido').length;

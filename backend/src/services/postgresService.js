@@ -1,3 +1,4 @@
+const { paraBanco } = require('../utils/colunasDinheiro');
 ﻿const { Pool } = require('pg');
 
 let pool = null;
@@ -45,8 +46,8 @@ async function ensureSheetsExist() {
       "Perfil" TEXT, "Empresa" TEXT, "Ativo" TEXT, "Criado_Em" TEXT, "Ultimo_Login" TEXT
     )`,
     `CREATE TABLE IF NOT EXISTS "Projetos_Contratos" (
-      "ID_Projeto" TEXT PRIMARY KEY, "Nome" TEXT, "Cliente" TEXT, "Valor_Global" TEXT,
-      "Teto_Terc_Perc" TEXT, "Teto_Terc_Valor" TEXT, "ID_ClickUp" TEXT, "Centro_Custo_OPP" TEXT,
+      "ID_Projeto" TEXT PRIMARY KEY, "Nome" TEXT, "Cliente" TEXT, "Valor_Global" NUMERIC(18,2),
+      "Teto_Terc_Perc" TEXT, "Teto_Terc_Valor" NUMERIC(18,2), "ID_ClickUp" TEXT, "Centro_Custo_OPP" TEXT,
       "Status" TEXT, "Progresso_Perc" TEXT, "Data_Inicio" TEXT, "Data_Entrega_Contrato" TEXT,
       "Data_Entrega_Planejada" TEXT, "Empresa" TEXT, "Setor" TEXT, "Tipologia" TEXT,
       "Link_ClickUp" TEXT, "Criado_Em" TEXT, "Atualizado_Em" TEXT, "Responsavel" TEXT
@@ -54,7 +55,7 @@ async function ensureSheetsExist() {
     `CREATE TABLE IF NOT EXISTS "Planejamentos" (
       "ID" TEXT PRIMARY KEY, "ID_Projeto" TEXT, "Nome_Projeto" TEXT, "Cliente" TEXT,
       "Nr_Contrato_OS" TEXT, "Resp_Planejamento" TEXT, "Resp_Aprovacao" TEXT, "Setor" TEXT,
-      "Tipologia" TEXT, "Empresa" TEXT, "Link_ClickUp" TEXT, "Valor_Contrato" TEXT,
+      "Tipologia" TEXT, "Empresa" TEXT, "Link_ClickUp" TEXT, "Valor_Contrato" NUMERIC(18,2),
       "Impostos_Perc" TEXT, "Taxa_Adm_Perc" TEXT, "Comissao_Perc" TEXT, "Data_Inicio_OS" TEXT,
       "Data_Entrega_Contrato" TEXT, "Data_Entrega_Planejada" TEXT, "Status" TEXT,
       "Justificativa" TEXT, "Comentario_Aprovacao" TEXT, "Justificativa_Replanejamento" TEXT,
@@ -64,34 +65,34 @@ async function ensureSheetsExist() {
     )`,
     `CREATE TABLE IF NOT EXISTS "Medicoes" (
       "ID_Medicao" TEXT PRIMARY KEY, "ID_Projeto" TEXT, "Etapa" TEXT, "Percentual" TEXT,
-      "Valor" TEXT, "Data_Previsao" TEXT, "Data_Realizacao" TEXT, "Status_Fisico" TEXT,
+      "Valor" NUMERIC(18,2), "Data_Previsao" TEXT, "Data_Realizacao" TEXT, "Status_Fisico" TEXT,
       "Status_Financeiro" TEXT, "ID_Tarefa_ClickUp" TEXT, "Nr_NF" TEXT, "Data_Emissao_NF" TEXT,
       "Data_Vencimento" TEXT, "Data_Recebimento" TEXT, "Observacao" TEXT
     )`,
     `CREATE TABLE IF NOT EXISTS "Terceirizados" (
       "ID" TEXT PRIMARY KEY, "ID_Projeto" TEXT, "Servico" TEXT, "Fornecedor" TEXT,
-      "Valor_Contratado" TEXT, "Valor_Pago" TEXT, "Status" TEXT, "ID_Tarefa_ClickUp" TEXT,
+      "Valor_Contratado" NUMERIC(18,2), "Valor_Pago" NUMERIC(18,2), "Status" TEXT, "ID_Tarefa_ClickUp" TEXT,
       "ID_Medicao_Vinculada" TEXT, "Percentual_do_Total" TEXT, "Data_Entrega_Prevista" TEXT,
       "Data_Entrega_Real" TEXT, "Observacao" TEXT, "Aprovado_Por" TEXT, "Criado_Em" TEXT,
       "OC" TEXT, "Status_ClickUp" TEXT, "Etapa_ClickUp" TEXT, "Responsavel" TEXT,
-      "Descricao_Servico" TEXT, "CNPJ_CPF" TEXT, "Nr_Contrato" TEXT, "Valor_Estimado" TEXT,
+      "Descricao_Servico" TEXT, "CNPJ_CPF" TEXT, "Nr_Contrato" TEXT, "Valor_Estimado" NUMERIC(18,2),
       "Data_Vencimento" TEXT, "Nr_NF" TEXT, "Data_Pagamento" TEXT, "Link_Contrato" TEXT,
       "Setor" TEXT
     )`,
     `CREATE TABLE IF NOT EXISTS "Equipe_Planejamento" (
       "ID" TEXT PRIMARY KEY, "ID_Planejamento" TEXT, "Colaborador" TEXT,
-      "Media_Hora" TEXT, "Horas_Estimadas" TEXT, "Total" TEXT
+      "Media_Hora" TEXT, "Horas_Estimadas" TEXT, "Total" NUMERIC(18,2)
     )`,
     `CREATE TABLE IF NOT EXISTS "Despesas_Planejamento" (
-      "ID" TEXT PRIMARY KEY, "ID_Planejamento" TEXT, "Descricao" TEXT, "Valor" TEXT
+      "ID" TEXT PRIMARY KEY, "ID_Planejamento" TEXT, "Descricao" TEXT, "Valor" NUMERIC(18,2)
     )`,
     `CREATE TABLE IF NOT EXISTS "Log_Horas" (
       "ID" TEXT PRIMARY KEY, "ID_Projeto" TEXT, "Colaborador" TEXT, "Horas_Estimadas" TEXT,
-      "Horas_Logadas" TEXT, "Custo_Calculado" TEXT, "Data" TEXT, "ID_TimeEntry_ClickUp" TEXT
+      "Horas_Logadas" TEXT, "Custo_Calculado" NUMERIC(18,2), "Data" TEXT, "ID_TimeEntry_ClickUp" TEXT
     )`,
     `CREATE TABLE IF NOT EXISTS "Custos_OPP" (
       "ID" TEXT PRIMARY KEY, "ID_Projeto" TEXT, "Centro_Custo" TEXT, "Descricao" TEXT,
-      "Valor_Lancado" TEXT, "Data_Lancamento" TEXT, "Tipo" TEXT, "Fornecedor_Cliente" TEXT,
+      "Valor_Lancado" NUMERIC(18,2), "Data_Lancamento" TEXT, "Tipo" TEXT, "Fornecedor_Cliente" TEXT,
       "Nr_Documento" TEXT, "ID_Importacao" TEXT
     )`,
     `CREATE TABLE IF NOT EXISTS "Alertas" (
@@ -108,13 +109,13 @@ async function ensureSheetsExist() {
     )`,
     `CREATE TABLE IF NOT EXISTS "Financeiro_OPP" (
       "ID_OPP" TEXT PRIMARY KEY, "Tipo" TEXT, "Profissional" TEXT, "Categoria" TEXT,
-      "Descricao" TEXT, "Valor" TEXT, "Data_Vencimento" TEXT, "Data_Competencia" TEXT,
+      "Descricao" TEXT, "Valor" NUMERIC(18,2), "Data_Vencimento" TEXT, "Data_Competencia" TEXT,
       "Situacao" TEXT, "ID_Cliente_OPP" TEXT, "Nome_Cliente" TEXT, "Nr_Documento" TEXT,
       "Nr_OS_OPP" TEXT, "OC" TEXT, "Sincronizado_Em" TEXT
     )`,
     `CREATE TABLE IF NOT EXISTS "OrdensCompra_OPP" (
       "ID_OC" TEXT PRIMARY KEY, "ID_Ordem_OPP" TEXT, "Nome_Fornecedor" TEXT,
-      "Valor_Total" TEXT, "Valor_Liquidado" TEXT, "Data_Pedido" TEXT, "Situacao" TEXT,
+      "Valor_Total" NUMERIC(18,2), "Valor_Liquidado" NUMERIC(18,2), "Data_Pedido" TEXT, "Situacao" TEXT,
       "Observacao" TEXT, "Sincronizado_Em" TEXT
     )`,
     // Ordens de Serviço reais do OPP — cada medição de verdade vira sua
@@ -125,7 +126,7 @@ async function ensureSheetsExist() {
     `CREATE TABLE IF NOT EXISTS "OrdensServico_OPP" (
       "ID_OS_OPP" TEXT PRIMARY KEY, "ID_Ordem_OPP" TEXT, "ID_Cliente_OPP" TEXT,
       "Nome_Cliente" TEXT, "Referencia" TEXT, "Problema" TEXT, "Observacao" TEXT,
-      "Valor_Total" TEXT, "Status" TEXT, "Data_Pedido" TEXT, "Data_Entrega" TEXT,
+      "Valor_Total" NUMERIC(18,2), "Status" TEXT, "Data_Pedido" TEXT, "Data_Entrega" TEXT,
       "Data_Realizacao" TEXT, "Sincronizado_Em" TEXT
     )`,
     `CREATE INDEX IF NOT EXISTS "idx_os_opp_cliente" ON "OrdensServico_OPP" ("ID_Cliente_OPP")`,
@@ -160,7 +161,7 @@ async function ensureSheetsExist() {
     // adiciona coluna em tabela que já existe, então o sync de Ordens de Compra
     // ficava sempre falhando silenciosamente (erro engolido pelo catch do cron)
     // na hora de gravar, deixando a tabela sempre vazia.
-    `ALTER TABLE "OrdensCompra_OPP" ADD COLUMN IF NOT EXISTS "Valor_Liquidado" TEXT`,
+    `ALTER TABLE "OrdensCompra_OPP" ADD COLUMN IF NOT EXISTS "Valor_Liquidado" NUMERIC(18,2)`,
     // Tarefa fixa criada automaticamente em cada projeto (lista do ClickUp) na
     // 1ª vez que o sistema precisa comentar/mencionar sobre um planejamento —
     // reaproveitada sempre depois, em vez de criar uma tarefa nova toda hora.
@@ -181,7 +182,7 @@ async function ensureSheetsExist() {
     `ALTER TABLE "Terceirizados" ADD COLUMN IF NOT EXISTS "Descricao_Servico" TEXT`,
     `ALTER TABLE "Terceirizados" ADD COLUMN IF NOT EXISTS "CNPJ_CPF" TEXT`,
     `ALTER TABLE "Terceirizados" ADD COLUMN IF NOT EXISTS "Nr_Contrato" TEXT`,
-    `ALTER TABLE "Terceirizados" ADD COLUMN IF NOT EXISTS "Valor_Estimado" TEXT`,
+    `ALTER TABLE "Terceirizados" ADD COLUMN IF NOT EXISTS "Valor_Estimado" NUMERIC(18,2)`,
     `ALTER TABLE "Terceirizados" ADD COLUMN IF NOT EXISTS "Data_Vencimento" TEXT`,
     `ALTER TABLE "Terceirizados" ADD COLUMN IF NOT EXISTS "Nr_NF" TEXT`,
     `ALTER TABLE "Terceirizados" ADD COLUMN IF NOT EXISTS "Data_Pagamento" TEXT`,
@@ -224,10 +225,10 @@ function rowToStrings(row) {
   return obj;
 }
 
-// Converte valor para null se for string vazia (para INSERT/UPDATE no PG)
-function toDb(val) {
-  if (val === '' || val === undefined) return null;
-  return val;
+// Converte valor para o banco: vazio vira null e, nas colunas de dinheiro (NUMERIC), qualquer formato
+// de entrada ("1.500,00", "1500.00", 1500) vira numero. Ver utils/colunasDinheiro.js.
+function toDb(tabela, coluna, val) {
+  return paraBanco(tabela, coluna, val);
 }
 
 // Cache em memória, por tabela, do resultado de readSheet (SELECT * sem
@@ -283,7 +284,7 @@ async function insertRow(tableName, data) {
 
   const cols = keys.map(k => `"${k}"`).join(', ');
   const placeholders = keys.map((_, i) => `$${i + 1}`).join(', ');
-  const values = keys.map(k => toDb(data[k]));
+  const values = keys.map(k => toDb(tableName, k, data[k]));
 
   await getPool().query(
     `INSERT INTO "${tableName}" (${cols}) VALUES (${placeholders}) ON CONFLICT DO NOTHING`,
@@ -309,7 +310,7 @@ async function insertManyRows(tableName, dataArray) {
     for (const row of batch) {
       const placeholders = keys.map(() => `$${idx++}`).join(', ');
       valueSets.push(`(${placeholders})`);
-      keys.forEach(k => allValues.push(toDb(row[k])));
+      keys.forEach(k => allValues.push(toDb(tableName, k, row[k])));
     }
     await getPool().query(
       `INSERT INTO "${tableName}" (${cols}) VALUES ${valueSets.join(', ')} ON CONFLICT DO NOTHING`,
@@ -324,7 +325,7 @@ async function updateRowById(tableName, idField, idValue, newData) {
   if (keys.length === 0) return newData;
 
   const sets = keys.map((k, i) => `"${k}" = $${i + 1}`).join(', ');
-  const values = [...keys.map(k => toDb(newData[k])), idValue];
+  const values = [...keys.map(k => toDb(tableName, k, newData[k])), idValue];
 
   await getPool().query(
     `UPDATE "${tableName}" SET ${sets} WHERE "${idField}" = $${keys.length + 1}`,
