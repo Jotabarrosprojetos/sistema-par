@@ -2,6 +2,7 @@ const { parse } = require('csv-parse/sync');
 const XLSX = require('xlsx');
 const db = process.env.USE_POSTGRES === 'true' ? require('./postgresService') : require('./googleSheetsService');
 const { v4: uuidv4 } = require('uuid');
+const { parseDinheiro } = require('../utils/dinheiro');
 
 /**
  * Colunas reais exportadas pelo Opportune (Relatório de Contas a Pagar/Receber):
@@ -87,8 +88,7 @@ function normalizeRecords(records) {
     else if (sit.includes('aberto') || sit.includes('pagar') || sit.includes('vencido') || sit.includes('agendado')) tipo = 'A Pagar';
 
     function parseValor(str) {
-      const limpo = String(str).replace(/\./g, '').replace(',', '.').replace(/[^0-9.-]/g, '');
-      return parseFloat(limpo) || 0;
+      return parseDinheiro(str);
     }
 
     if (!descricao && !fornecedor) {

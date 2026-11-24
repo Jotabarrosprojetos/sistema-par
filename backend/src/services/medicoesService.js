@@ -1,3 +1,4 @@
+const { parseDinheiro } = require('../utils/dinheiro');
 ﻿// Motor de cálculo das Medições & Faturamento, reaproveitado por mais de uma
 // tela (originalmente só vivia dentro da rota GET /api/medicoes, em
 // medicoes.js). Extraído pra cá pra poder ser usado também pelo
@@ -69,11 +70,7 @@ async function calcularMedicoesComOPPSemCache(db, filtros = {}) {
   // milhar quando o texto tem vírgula (formato BR de verdade) ou quando
   // o ponto não parece ser decimal.
   const pBR = (v) => {
-    const s = String(v || 0).trim();
-    if (s.includes(',')) return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
-    const partes = s.split('.');
-    if (partes.length === 2 && partes[1].length <= 2) return parseFloat(s) || 0;
-    return parseFloat(s.replace(/\./g, '')) || 0;
+    return parseDinheiro(v);
   };
 
   // Mapa por id_centro_custos (fonte principal e confiável — mesmo vínculo

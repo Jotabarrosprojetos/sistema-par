@@ -1,4 +1,5 @@
 const express = require('express');
+const { parseDinheiro } = require('../utils/dinheiro');
 const ExcelJS = require('exceljs');
 const PDFDocument = require('pdfkit');
 const db = process.env.USE_POSTGRES === 'true' ? require('../services/postgresService') : require('../services/googleSheetsService');
@@ -12,11 +13,7 @@ router.use(authMiddleware);
 // de oppService.js. parseFloat cru só lê o formato EN certo — esse parser lê
 // os dois, mesma lógica já usada em medicoesService.js pro mesmo tipo de campo.
 function pBROpp(v) {
-  const s = String(v || 0).trim();
-  if (s.includes(',')) return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
-  const partes = s.split('.');
-  if (partes.length === 2 && partes[1].length <= 2) return parseFloat(s) || 0;
-  return parseFloat(s.replace(/\./g, '')) || 0;
+  return parseDinheiro(v);
 }
 
 // Middleware de timeout para rotas pesadas
@@ -38,11 +35,7 @@ function withTimeout(ms) {
 // então precisam passar por aqui antes de formatar — parseFloat()/Number() puro
 // corta no separador errado (ou vira NaN) e o relatório sai com valor errado.
 function pBR(v) {
-  const s = String(v || 0).trim();
-  if (s.includes(',')) return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
-  const parts = s.split('.');
-  if (parts.length === 2 && parts[1].length <= 2) return parseFloat(s) || 0;
-  return parseFloat(s.replace(/\./g, '')) || 0;
+  return parseDinheiro(v);
 }
 
 function formatBRL(value) {

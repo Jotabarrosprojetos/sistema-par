@@ -1,5 +1,6 @@
 ﻿const express = require('express');
 const { v4: uuidv4 } = require('uuid');
+const { parseDinheiro } = require('../utils/dinheiro');
 const db = process.env.USE_POSTGRES === 'true' ? require('../services/postgresService') : require('../services/googleSheetsService');
 const { authMiddleware, authorize } = require('../middleware/auth');
 const { createAlert } = require('../services/alertService');
@@ -13,11 +14,7 @@ const audit = auditMiddleware('Medicoes');
 // pros outros campos monetários — grava sempre em BR, lê os dois formatos.
 const formatarBR = (v) => (Number(v) || 0).toFixed(2).replace('.', ',');
 function pBR(v) {
-  const s = String(v || 0).trim();
-  if (s.includes(',')) return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
-  const partes = s.split('.');
-  if (partes.length === 2 && partes[1].length <= 2) return parseFloat(s) || 0;
-  return parseFloat(s.replace(/\./g, '')) || 0;
+  return parseDinheiro(v);
 }
 
 // GET /api/medicoes/oc/:oc — busca medição pelo campo O.C. (chave OPP)

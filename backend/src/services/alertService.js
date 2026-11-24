@@ -1,4 +1,5 @@
 const db = process.env.USE_POSTGRES === 'true' ? require('./postgresService') : require('./googleSheetsService');
+const { parseDinheiro } = require('../utils/dinheiro');
 const { broadcast } = require('./websocketService');
 const { v4: uuidv4 } = require('uuid');
 const { calcularMedicoesComOPP } = require('./medicoesService');
@@ -20,11 +21,7 @@ const DIAS_A_PLANEJAR      = parseInt(process.env.ALERTA_DIAS_A_PLANEJAR      ||
 // ficavam com percAlertaTerceiros/isProjetoReal errados. Mesmo parser já
 // usado em oppService.js/planejamento.js/relatorios.js.
 function pBR(v) {
-  const s = String(v || 0).trim();
-  if (s.includes(',')) return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
-  const partes = s.split('.');
-  if (partes.length === 2 && partes[1].length <= 2) return parseFloat(s) || 0;
-  return parseFloat(s.replace(/\./g, '')) || 0;
+  return parseDinheiro(v);
 }
 
 function diasUteisDesde(date) {
@@ -336,7 +333,7 @@ async function checkAllAlerts() {
     // 2g. MARGEM_ABAIXO_MINIMO
     // Planejamentos aprovados onde lucroPerc < 23%
     // ─────────────────────────────────────────
-    const parseBR = (v) => parseFloat(String(v || 0).replace(/\./g, '').replace(',', '.')) || 0;
+    const parseBR = (v) => parseDinheiro(v);
     const planejamentos = await db.readSheet('Planejamentos');
     const planMap = {};
     for (const pl of planejamentos) planMap[pl.ID_Projeto] = pl;

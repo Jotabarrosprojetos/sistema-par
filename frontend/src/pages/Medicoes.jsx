@@ -8,6 +8,7 @@ import LoadingSpinner from '../components/common/LoadingSpinner'
 import Modal from '../components/common/Modal'
 import Input from '../components/common/Input'
 import { useTheme } from '../contexts/ThemeContext'
+import { parseDinheiro } from '../utils/dinheiro'
 
 const STATUS_MEDICAO = ['Prevista', 'Em Andamento', 'Concluída', 'Cancelada']
 
@@ -244,13 +245,7 @@ export default function Medicoes() {
                   // (virava R$ 7.778.512,00 em vez de R$ 77.785,12). Só trata
                   // como milhar quando o texto tem vírgula (formato BR de
                   // verdade) ou quando o ponto não parece ser decimal.
-                  const pBR = v => {
-                    const s = String(v || 0).trim()
-                    if (s.includes(',')) return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0
-                    const partes = s.split('.')
-                    if (partes.length === 2 && partes[1].length <= 2) return parseFloat(s) || 0
-                    return parseFloat(s.replace(/\./g, '')) || 0
-                  }
+                  const pBR = v => parseDinheiro(v)
                   const valorTotal = pBR(m.Valor_Medicao || m.Valor || 0)
                   const valorRecebido = m.Status_Financeiro === 'Recebido' ? valorTotal : (m.valorRecebidoOPP || 0)
                   const saldo = Math.max(0, valorTotal - valorRecebido)

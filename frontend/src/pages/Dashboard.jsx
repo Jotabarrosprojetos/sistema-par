@@ -15,11 +15,12 @@ import { useAuth } from '../contexts/AuthContext'
 import { useTheme } from '../contexts/ThemeContext'
 import PaineisClickUp from '../components/PaineisClickUp'
 import ProjetosClickUp from '../components/ProjetosClickUp'
+import { parseDinheiro } from '../utils/dinheiro'
 
 const fmt = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact', maximumFractionDigits: 1 }).format(v || 0)
 const fmtFull = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0)
 const fmtN = (v, dec = 1) => Number(v || 0).toFixed(dec)
-const parseBR = (v) => parseFloat(String(v || 0).replace(/\./g, '').replace(',', '.')) || 0
+const parseBR = (v) => parseDinheiro(v)
 
 const STATUS_COLORS = {
   'Em Andamento':            '#22C55E',
@@ -479,7 +480,7 @@ export default function Dashboard() {
     try {
       const dados = JSON.parse(plan.Dados_JSON || '{}')
       const meds = dados.medicoes || dados._baseline?.medicoesCronograma || []
-      const parseBRv = v => { if (!v) return 0; const s = String(v).replace(/\./g, '').replace(',', '.'); return parseFloat(s) || 0 }
+      const parseBRv = v => { return parseDinheiro(v) }
       return s + meds.reduce((ss, m) => ss + parseBRv(m.valorPlan || m.valor || m.valorPlanejado || 0), 0)
     } catch { return s }
   }, 0)
@@ -520,7 +521,7 @@ export default function Dashboard() {
   ].sort((a, b) => b.value - a.value)
 
   const medicoesPorMes = (() => {
-    const _parseBR = v => { if (!v) return 0; const s = String(v).replace(/\./g, '').replace(',', '.'); return parseFloat(s) || 0 }
+    const _parseBR = v => { return parseDinheiro(v) }
     const hoje = new Date()
     const mesAtual = hoje.toISOString().slice(0, 7)
     const mesFuturo6 = new Date(hoje.getFullYear(), hoje.getMonth() + 6, 1).toISOString().slice(0, 7)
@@ -585,7 +586,7 @@ export default function Dashboard() {
       const dt = d ? new Date(d + 'T00:00:00') : null
       return dt && dt >= hoje && dt <= daqui30 && m.Status !== 'Cancelada' && m.Status !== 'Concluída'
     })
-    const parseBRval = v => { if (!v) return 0; const s = String(v).replace(/\./g, '').replace(',', '.'); return parseFloat(s) || 0 }
+    const parseBRval = v => { return parseDinheiro(v) }
     const idsNaTabela = new Set(medicoesFiltradas.map(m => m.ID_Projeto))
     const doPlano = []
     aprovados.forEach(plan => {

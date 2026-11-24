@@ -10,12 +10,13 @@ import api from "../utils/api"
 import { useTheme } from "../contexts/ThemeContext"
 import { useAuth } from "../contexts/AuthContext"
 import * as XLSX from "xlsx"
+import { parseDinheiro } from '../utils/dinheiro'
 
 // ── Formatters ───────────────────────────────────────────────────────────────
 const fmt = (v) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0)
 const fmtN = (v, dec = 1) => Number(v || 0).toFixed(dec)
 // Aceita vírgula ou ponto como separador decimal (formato BR ou EN)
-const parseBR = (v) => parseFloat(String(v || 0).replace(/\./g, '').replace(',', '.')) || 0
+const parseBR = (v) => parseDinheiro(v)
 
 // Sincroniza valor e percentual das medicoes com o Valor do Contrato e fecha os
 // centavos de arredondamento na ULTIMA medicao (30/10/2026). Antes o valor era
@@ -110,7 +111,7 @@ function Section({ title, open, onToggle, children, badge, limitBadge }) {
 }
 
 // ── PAR calcs ────────────────────────────────────────────────────────────────
-const pBR = (v) => parseFloat(String(v || 0).replace(/\./g, '').replace(',', '.')) || 0
+const pBR = (v) => parseDinheiro(v)
 // /api/projetos devolve Valor_Global ja como numero JS em string ("14658.95"). O form usa
 // formato BR, e o pBR acima le o ponto como milhar -> virava 1.465.895 ("fator 100").
 // Converte pra BR antes de jogar no form.

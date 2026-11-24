@@ -1,4 +1,5 @@
 const express = require('express');
+const { parseDinheiro } = require('../utils/dinheiro');
 const db = process.env.USE_POSTGRES === 'true' ? require('../services/postgresService') : require('../services/googleSheetsService');
 const { authMiddleware } = require('../middleware/auth');
 
@@ -9,11 +10,7 @@ router.use(authMiddleware);
 // igual ao usado em baseline-real.js/dashboard-financeiro.js/planejamento.js — parseFloat()
 // puro corta o valor no separador errado e gera números muito menores que o real.
 const pBR = (v) => {
-  const s = String(v || 0).trim();
-  if (s.includes(',')) return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
-  const parts = s.split('.');
-  if (parts.length === 2 && parts[1].length <= 2) return parseFloat(s) || 0;
-  return parseFloat(s.replace(/\./g, '')) || 0;
+  return parseDinheiro(v);
 };
 
 // GET /api/relatorio-final/:idProjeto — consolida fechamento do projeto

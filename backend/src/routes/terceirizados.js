@@ -1,4 +1,5 @@
 const express = require('express');
+const { parseDinheiro } = require('../utils/dinheiro');
 const { v4: uuidv4 } = require('uuid');
 const db = process.env.USE_POSTGRES === 'true'
   ? require('../services/postgresService')
@@ -39,11 +40,7 @@ async function calcPercTerceiros(idProjeto, valorGlobal, excludeId = null) {
 // dois corretamente, não assume um formato fixo — mesma lógica já usada em
 // medicoesService.js pro mesmo tipo de campo vindo do OPP.
 function pBROpp(v) {
-  const s = String(v || 0).trim();
-  if (s.includes(',')) return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
-  const partes = s.split('.');
-  if (partes.length === 2 && partes[1].length <= 2) return parseFloat(s) || 0;
-  return parseFloat(s.replace(/\./g, '')) || 0;
+  return parseDinheiro(v);
 }
 
 // Converte um número pro formato de texto BR que o resto do sistema espera.

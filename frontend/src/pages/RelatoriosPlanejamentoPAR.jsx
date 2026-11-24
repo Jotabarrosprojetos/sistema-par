@@ -3,10 +3,11 @@ import { useNavigate } from "react-router-dom"
 import { FileText, ChevronDown, ChevronRight, Printer, Search, X, ArrowLeft } from "lucide-react"
 import api from "../utils/api"
 import { useTheme } from "../contexts/ThemeContext"
+import { parseDinheiro } from '../utils/dinheiro'
 
 const fmt = (v) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0)
 const fmtN = (v, dec = 1) => Number(v || 0).toFixed(dec)
-const pBR = (v) => parseFloat(String(v || 0).replace(/\./g, "").replace(",", ".")) || 0
+const pBR = (v) => parseDinheiro(v)
 
 function calcPAR(d) {
   const V = pBR(d.valorContrato)

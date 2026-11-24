@@ -3,9 +3,10 @@ import { toast } from "react-hot-toast"
 import { ArrowPathIcon, XMarkIcon, BuildingOffice2Icon, BanknotesIcon, FolderIcon } from "@heroicons/react/24/outline"
 import api from "../utils/api"
 import { useAuth } from "../contexts/AuthContext"
+import { parseDinheiro } from '../utils/dinheiro'
 
 const fmt = (v) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0)
-const parseBR = (v) => parseFloat(String(v || 0).replace(/\./g, '').replace(',', '.')) || 0
+const parseBR = (v) => parseDinheiro(v)
 
 function Chip({ label, active, onClick }) {
   return (

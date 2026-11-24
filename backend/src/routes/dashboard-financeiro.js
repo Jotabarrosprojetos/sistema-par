@@ -1,11 +1,12 @@
 const express = require('express');
+const { parseDinheiro } = require('../utils/dinheiro');
 const { authMiddleware } = require('../middleware/auth');
 const db = process.env.USE_POSTGRES === 'true' ? require('../services/postgresService') : require('../services/googleSheetsService');
 
 const router = express.Router();
 router.use(authMiddleware);
 
-const pBR = (v) => parseFloat(String(v || 0).replace(/\./g, '').replace(',', '.')) || 0;
+const pBR = (v) => parseDinheiro(v);
 
 // Normaliza qualquer formato de data para YYYY-MM (para agrupamento mensal)
 // Suporta: YYYY-MM-DD, DD/MM/YYYY, MM/YYYY, YYYY-MM

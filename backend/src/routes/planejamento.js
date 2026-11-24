@@ -1,5 +1,6 @@
 ﻿const express = require('express');
 const { v4: uuidv4 } = require('uuid');
+const { parseDinheiro, parseNumero } = require('../utils/dinheiro');
 const db = process.env.USE_POSTGRES === 'true' ? require('../services/postgresService') : require('../services/googleSheetsService');
 const { authMiddleware, authorize } = require('../middleware/auth');
 const { auditMiddleware, registrarAuditoria } = require('../middleware/audit');
@@ -101,11 +102,7 @@ const audit = auditMiddleware('Planejamentos');
 // caminho inverso (sempre grava em BR, nunca deixa a corrupção acontecer de
 // novo na escrita).
 const parseBR = (v) => {
-  const s = String(v || 0).trim();
-  if (s.includes(',')) return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
-  const partes = s.split('.');
-  if (partes.length === 2 && partes[1].length <= 2) return parseFloat(s) || 0;
-  return parseFloat(s.replace(/\./g, '')) || 0;
+  return parseDinheiro(v);
 };
 
 // Converte um número de volta pro formato de texto BR que o sistema usa pra
@@ -138,8 +135,8 @@ function calcularTotais(dados) {
   const V = parseBR(dados.valorContrato);
 
   // Taxas ajustáveis — com mínimos protegidos
-  const ip = Math.max(parseFloat(dados.impostosPerc || 20), 16.33);  // min 16.33%
-  const ta = Math.max(parseFloat(dados.taxaAdmPerc  || 12),  5);     // min 5%
+  const ip = Math.max(parseNumero(dados.impostosPerc || 20), 16.33);  // min 16.33%
+  const ta = Math.max(parseNumero(dados.taxaAdmPerc || 12),  5);     // min 5%
   const co = 7.50;                                                     // FIXO — não ajustável
 
   const impostos = V * ip / 100;
@@ -224,11 +221,7 @@ router.post('/migrar-baselines', authMiddleware, authorize('PO','Comercial','Fin
     }
     // Mesmo parser dual-formato do parseBR() acima — lê BR e EN corretamente.
     const parseBRLocal = (v) => {
-      const s = String(v || 0).trim();
-      if (s.includes(',')) return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
-      const partes = s.split('.');
-      if (partes.length === 2 && partes[1].length <= 2) return parseFloat(s) || 0;
-      return parseFloat(s.replace(/\./g, '')) || 0;
+      return parseDinheiro(v);
     };
     const aprovados = await db.findRows('Planejamentos', (p) => p.Status === 'Aprovado');
     let travados = 0, jaExistia = 0, erros = 0;
@@ -247,9 +240,9 @@ router.post('/migrar-baselines', authMiddleware, authorize('PO','Comercial','Fin
           dataInicioOS: dados.dataInicioOS || plan.Data_Inicio_OS || '',
           dataEntregaContrato: dados.dataEntregaContrato || plan.Data_Entrega_Contrato || '',
           dataEntregaPlanejada: dados.dataEntregaPlanejada || plan.Data_Entrega_Planejada || '',
-          horasPorColaborador: equipe.map((e) => ({ colaborador: e.colaborador || e.nome || '', horasEstimadas: parseFloat(e.horas || 0), mediaHora: parseFloat(e.mediaHora || 0), custoEstimado: parseFloat(e.mediaHora || 0) * parseFloat(e.horas || 0) })),
-          totalHorasEstimadas: equipe.reduce((s, e) => s + parseFloat(e.horas || 0), 0),
-          totalCustoEquipe: equipe.reduce((s, e) => s + (parseFloat(e.mediaHora || 0) * parseFloat(e.horas || 0)), 0),
+          horasPorColaborador: equipe.map((e) => ({ colaborador: e.colaborador || e.nome || '', horasEstimadas: parseNumero(e.horas || 0), mediaHora: parseNumero(e.mediaHora || 0), custoEstimado: parseNumero(e.mediaHora || 0) * parseNumero(e.horas || 0) })),
+          totalHorasEstimadas: equipe.reduce((s, e) => s + parseNumero(e.horas || 0), 0),
+          totalCustoEquipe: equipe.reduce((s, e) => s + (parseNumero(e.mediaHora || 0) * parseNumero(e.horas || 0)), 0),
           medicoes: medicoes.map((m) => ({ etapa: m.etapa || m.nome || '', percentual: parseBRLocal(m.percentual || 0), valor: parseBRLocal(m.valor || 0), dataPrevisao: m.dataPrevisao || m.data_previsao || '' })),
           terceirizados: (dados.terceirizados || []).map((t) => ({ descricao: t.descricao || t.servico || t.nome || '', custo: parseBRLocal(t.custo), fornecedor: t.fornecedor || '' })),
           despesas: (dados.despesas || []).map((d) => ({ descricao: d.descricao || '', valor: parseBRLocal(d.valor || 0) })),
@@ -655,11 +648,7 @@ async function handleAprovar(req, res, next, acaoForced) {
         if (!dados._baseline?.travado) {
           // Mesmo parser dual-formato do parseBR() acima — lê BR e EN corretamente.
     const parseBRLocal = (v) => {
-      const s = String(v || 0).trim();
-      if (s.includes(',')) return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
-      const partes = s.split('.');
-      if (partes.length === 2 && partes[1].length <= 2) return parseFloat(s) || 0;
-      return parseFloat(s.replace(/\./g, '')) || 0;
+      return parseDinheiro(v);
     };
           const equipe = dados.equipe || [];
           const medicoes = dados.medicoes || [];
@@ -672,9 +661,9 @@ async function handleAprovar(req, res, next, acaoForced) {
             dataInicioOS: dados.dataInicioOS || plan.Data_Inicio_OS || '',
             dataEntregaContrato: dados.dataEntregaContrato || plan.Data_Entrega_Contrato || '',
             dataEntregaPlanejada: dados.dataEntregaPlanejada || plan.Data_Entrega_Planejada || '',
-            horasPorColaborador: equipe.map((e) => ({ colaborador: e.colaborador || e.nome || '', horasEstimadas: parseFloat(e.horas || 0), mediaHora: parseFloat(e.mediaHora || 0), custoEstimado: parseFloat(e.mediaHora || 0) * parseFloat(e.horas || 0) })),
-            totalHorasEstimadas: equipe.reduce((s, e) => s + parseFloat(e.horas || 0), 0),
-            totalCustoEquipe: equipe.reduce((s, e) => s + (parseFloat(e.mediaHora || 0) * parseFloat(e.horas || 0)), 0),
+            horasPorColaborador: equipe.map((e) => ({ colaborador: e.colaborador || e.nome || '', horasEstimadas: parseNumero(e.horas || 0), mediaHora: parseNumero(e.mediaHora || 0), custoEstimado: parseNumero(e.mediaHora || 0) * parseNumero(e.horas || 0) })),
+            totalHorasEstimadas: equipe.reduce((s, e) => s + parseNumero(e.horas || 0), 0),
+            totalCustoEquipe: equipe.reduce((s, e) => s + (parseNumero(e.mediaHora || 0) * parseNumero(e.horas || 0)), 0),
             medicoes: medicoes.map((m) => ({ etapa: m.etapa || m.nome || '', percentual: parseBRLocal(m.percentual || 0), valor: parseBRLocal(m.valor || 0), dataPrevisao: m.dataPrevisao || m.data_previsao || '' })),
             terceirizados: (dados.terceirizados || []).map((t) => ({ descricao: t.descricao || t.servico || t.nome || '', custo: parseBRLocal(t.custo), fornecedor: t.fornecedor || '' })),
             despesas: (dados.despesas || []).map((d) => ({ descricao: d.descricao || '', valor: parseBRLocal(d.valor || 0) })),
@@ -829,7 +818,7 @@ router.get('/:id/checar-integridade', authMiddleware, authorize('PO','Comercial'
     const somaMedicoes = medicoes.reduce((s, m) => s + parseBR(m.percentual), 0);
     const temDataInicio = !!(dados.dataInicioOS || plan.Data_Inicio_OS);
     const temDataEntrega = !!(dados.dataEntregaContrato || plan.Data_Entrega_Contrato);
-    const tarefasGrandes = equipe.filter(e => parseFloat(e.horas || 0) > MAX_HORAS_TAREFA);
+    const tarefasGrandes = equipe.filter(e => parseNumero(e.horas || 0) > MAX_HORAS_TAREFA);
 
     const checklist = [
       { item: 'Margem de lucro ≥ 23%',           ok: !totais.margemAbaixoMinimo,         valor: `${totais.lucroPerc.toFixed(1)}%`,         critico: true  },
@@ -893,14 +882,14 @@ router.post('/:id/baseline', authMiddleware, authorize('PO','Comercial','Finance
       // Horas estimadas por colaborador
       horasPorColaborador: equipe.map((e) => ({
         colaborador: e.colaborador || e.nome || '',
-        horasEstimadas: parseFloat(e.horas || e.horas_estimadas || 0),
-        mediaHora: parseFloat(e.mediaHora || e.valor_hora || 0),
-        custoEstimado: parseFloat(e.mediaHora || 0) * parseFloat(e.horas || 0),
+        horasEstimadas: parseNumero(e.horas || e.horas_estimadas || 0),
+        mediaHora: parseNumero(e.mediaHora || e.valor_hora || 0),
+        custoEstimado: parseNumero(e.mediaHora || 0) * parseNumero(e.horas || 0),
       })),
 
       // Total de horas estimadas
-      totalHorasEstimadas: equipe.reduce((s, e) => s + parseFloat(e.horas || e.horas_estimadas || 0), 0),
-      totalCustoEquipe: equipe.reduce((s, e) => s + (parseFloat(e.mediaHora || 0) * parseFloat(e.horas || 0)), 0),
+      totalHorasEstimadas: equipe.reduce((s, e) => s + parseNumero(e.horas || e.horas_estimadas || 0), 0),
+      totalCustoEquipe: equipe.reduce((s, e) => s + (parseNumero(e.mediaHora || 0) * parseNumero(e.horas || 0)), 0),
 
       // Cronograma de medições planejado
       medicoes: medicoes.map((m) => ({
@@ -1019,8 +1008,8 @@ router.get('/:id/comparativo', authMiddleware, authorize('PO','Comercial','Finan
             if (Array.isArray(d.centro_custo) && d.centro_custo.length > 0) {
               for (const linha of d.centro_custo) {
                 if (String(linha.id_centro_custos || '') !== ccId) continue;
-                const valorPag = parseFloat(d.valor_pag || 0);
-                const valorLinha = parseFloat(linha.valor || 0);
+                const valorPag = parseDinheiro(d.valor_pag || 0);
+                const valorLinha = parseDinheiro(linha.valor || 0);
                 const proporcao = linha.percentual
                   ? parseFloat(linha.percentual) / 100
                   : (valorPag > 0 ? valorLinha / valorPag : 0);
@@ -1035,7 +1024,7 @@ router.get('/:id/comparativo', authMiddleware, authorize('PO','Comercial','Finan
                   // oppService) já usa parseFloat puro pra ler valor da OPP — só esse
                   // trecho e o de baixo (GET /despesas-opp) estavam errados.
                   valor: valorLinha,
-                  valorPago: parseFloat(d.valor_pago || 0) * proporcao,
+                  valorPago: parseDinheiro(d.valor_pago || 0) * proporcao,
                   liquidado: d.liquidado_pag === 'Sim',
                   data: d.vencimento_pag || d.data_emissao || '',
                   rateado: true,
@@ -1048,8 +1037,8 @@ router.get('/:id/comparativo', authMiddleware, authorize('PO','Comercial','Finan
               descricao: d.nome_conta || '',
               fornecedor: d.nome_fornecedor || '',
               categoria: d.categoria || d.nome_categoria || d.categoria_pag || '',
-              valor: parseFloat(d.valor_pag || 0),
-              valorPago: parseFloat(d.valor_pago || 0),
+              valor: parseDinheiro(d.valor_pag || 0),
+              valorPago: parseDinheiro(d.valor_pago || 0),
               liquidado: d.liquidado_pag === 'Sim',
               data: d.vencimento_pag || d.data_emissao || '',
             });
@@ -1064,7 +1053,7 @@ router.get('/:id/comparativo', authMiddleware, authorize('PO','Comercial','Finan
     for (const entry of logHoras) {
       const colab = entry.Colaborador || entry.colaborador || 'Não identificado';
       if (!horasReaisPorColab[colab]) horasReaisPorColab[colab] = 0;
-      horasReaisPorColab[colab] += parseFloat(entry.Horas_Logadas || entry.horas_logadas || 0);
+      horasReaisPorColab[colab] += parseNumero(entry.Horas_Logadas || entry.horas_logadas || 0);
     }
     const totalHorasRastreadas = Object.values(horasReaisPorColab).reduce((s, h) => s + h, 0);
 
@@ -1096,7 +1085,7 @@ router.get('/:id/comparativo', authMiddleware, authorize('PO','Comercial','Finan
         const totalPlanejado = parseFloat(
           baseline?.totalHorasEstimadas ||
           dados.totalHorasEstimadas ||
-          (dados.equipe || []).reduce((s, e) => s + parseFloat(e.horas_estimadas || e.horasEstimadas || e.horas || 0), 0) ||
+          (dados.equipe || []).reduce((s, e) => s + parseNumero(e.horas_estimadas || e.horasEstimadas || e.horas || 0), 0) ||
           0
         );
         const totalRastreado = parseFloat(totalHorasRastreadas.toFixed(2));
@@ -1115,7 +1104,7 @@ router.get('/:id/comparativo', authMiddleware, authorize('PO','Comercial','Finan
             (p) => (p.colaborador || p.nome || p.membro || p.Colaborador)?.toLowerCase() === colab.toLowerCase()
           );
           const rastreado = parseFloat((horasReaisPorColab[colab] || 0).toFixed(2));
-          const planejadoH = parseFloat(planColab?.horasEstimadas || planColab?.horas_estimadas || planColab?.horas || planColab?.horasTotal || 0);
+          const planejadoH = parseNumero(planColab?.horasEstimadas || planColab?.horas_estimadas || planColab?.horas || planColab?.horasTotal || 0);
           const desvio = rastreado - planejadoH;
           const dp = planejadoH > 0 ? ((rastreado / planejadoH - 1) * 100) : null;
           return {
@@ -1199,7 +1188,7 @@ router.get('/:id/comparativo', authMiddleware, authorize('PO','Comercial','Finan
       equipePlanejada: (() => {
         const equipe = baseline?.horasPorColaborador || dados.equipe || [];
         const totalHorasRastreadasProj = parseFloat(totalHorasRastreadas.toFixed(2));
-        const totalHorasPlan = equipe.reduce((s, e) => s + parseFloat(e.horasEstimadas || e.horas_estimadas || e.horas || 0), 0);
+        const totalHorasPlan = equipe.reduce((s, e) => s + parseNumero(e.horasEstimadas || e.horas_estimadas || e.horas || 0), 0);
 
         // Casa por nome normalizado (minúsculo + sem espaço nas pontas) —
         // mesma normalização usada no bloco "horas" acima. Sem isso, uma
@@ -1224,8 +1213,8 @@ router.get('/:id/comparativo', authMiddleware, authorize('PO','Comercial','Finan
 
         return equipe.map(e => {
           const nome = e.colaborador || e.nome || e.membro || '';
-          const horasPlan = parseFloat(e.horasEstimadas || e.horas_estimadas || e.horas || 0);
-          const valorHora = parseFloat(e.mediaHora || e.valor_hora || CUSTO_HORA_INTERNA);
+          const horasPlan = parseNumero(e.horasEstimadas || e.horas_estimadas || e.horas || 0);
+          const valorHora = parseNumero(e.mediaHora || e.valor_hora || CUSTO_HORA_INTERNA);
           const custoPlan = horasPlan * valorHora;
           // Horas reais = match direto + proporção das não-matchadas
           const horasMatch = horasReaisPorColabNorm[normNome(nome)] || 0;
@@ -1239,7 +1228,7 @@ router.get('/:id/comparativo', authMiddleware, authorize('PO','Comercial','Finan
       // Despesas internas planejadas
       despesasPlanejadas: (baseline?.despesas || dados.despesas || []).map(d => ({
         descricao: d.descricao || '',
-        valor: parseFloat(d.valor || 0),
+        valor: parseDinheiro(d.valor || 0),
       })),
 
       // Info do baseline
@@ -1350,8 +1339,8 @@ router.get('/:id/despesas-opp', authMiddleware, authorize('PO','Comercial','Fina
       if (Array.isArray(d.centro_custo) && d.centro_custo.length > 0) {
         for (const linha of d.centro_custo) {
           if (String(linha.id_centro_custos || '') !== ccId) continue;
-          const valorPag = parseFloat(d.valor_pag || 0);
-          const valorLinha = parseFloat(linha.valor || 0);
+          const valorPag = parseDinheiro(d.valor_pag || 0);
+          const valorLinha = parseDinheiro(linha.valor || 0);
           const proporcao = linha.percentual
             ? parseFloat(linha.percentual) / 100
             : (valorPag > 0 ? valorLinha / valorPag : 0);
@@ -1361,7 +1350,7 @@ router.get('/:id/despesas-opp', authMiddleware, authorize('PO','Comercial','Fina
             fornecedor: d.nome_fornecedor || '',
             categoria: d.categoria || d.nome_categoria || d.categoria_pag || '',
             valor: valorLinha,
-            valorPago: parseFloat(d.valor_pago || 0) * proporcao,
+            valorPago: parseDinheiro(d.valor_pago || 0) * proporcao,
             situacao: d.situacao || '',
             liquidado: d.liquidado_pag === 'Sim',
             data: d.vencimento_pag || d.data_emissao || '',
@@ -1380,8 +1369,8 @@ router.get('/:id/despesas-opp', authMiddleware, authorize('PO','Comercial','Fina
         fornecedor: d.nome_fornecedor || '',
         categoria: d.categoria || d.nome_categoria || d.categoria_pag || '',
         // Mesmo bug do /comparativo acima — valor da OPP não é formato BR.
-        valor: parseFloat(d.valor_pag || 0),
-        valorPago: parseFloat(d.valor_pago || 0),
+        valor: parseDinheiro(d.valor_pag || 0),
+        valorPago: parseDinheiro(d.valor_pago || 0),
         situacao: d.situacao || '',
         liquidado: d.liquidado_pag === 'Sim',
         data: d.vencimento_pag || d.data_emissao || '',
@@ -1618,11 +1607,7 @@ router.post('/migrar-baselines-dup', authMiddleware, authorize('PO','Comercial',
     }
     // Mesmo parser dual-formato do parseBR() acima — lê BR e EN corretamente.
     const parseBRLocal = (v) => {
-      const s = String(v || 0).trim();
-      if (s.includes(',')) return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
-      const partes = s.split('.');
-      if (partes.length === 2 && partes[1].length <= 2) return parseFloat(s) || 0;
-      return parseFloat(s.replace(/\./g, '')) || 0;
+      return parseDinheiro(v);
     };
     const aprovados = await db.findRows('Planejamentos', (p) => p.Status === 'Aprovado');
     let travados = 0, jaExistia = 0, erros = 0;
@@ -1641,9 +1626,9 @@ router.post('/migrar-baselines-dup', authMiddleware, authorize('PO','Comercial',
           dataInicioOS: dados.dataInicioOS || plan.Data_Inicio_OS || '',
           dataEntregaContrato: dados.dataEntregaContrato || plan.Data_Entrega_Contrato || '',
           dataEntregaPlanejada: dados.dataEntregaPlanejada || plan.Data_Entrega_Planejada || '',
-          horasPorColaborador: equipe.map((e) => ({ colaborador: e.colaborador || e.nome || '', horasEstimadas: parseFloat(e.horas || 0), mediaHora: parseFloat(e.mediaHora || 0), custoEstimado: parseFloat(e.mediaHora || 0) * parseFloat(e.horas || 0) })),
-          totalHorasEstimadas: equipe.reduce((s, e) => s + parseFloat(e.horas || 0), 0),
-          totalCustoEquipe: equipe.reduce((s, e) => s + (parseFloat(e.mediaHora || 0) * parseFloat(e.horas || 0)), 0),
+          horasPorColaborador: equipe.map((e) => ({ colaborador: e.colaborador || e.nome || '', horasEstimadas: parseNumero(e.horas || 0), mediaHora: parseNumero(e.mediaHora || 0), custoEstimado: parseNumero(e.mediaHora || 0) * parseNumero(e.horas || 0) })),
+          totalHorasEstimadas: equipe.reduce((s, e) => s + parseNumero(e.horas || 0), 0),
+          totalCustoEquipe: equipe.reduce((s, e) => s + (parseNumero(e.mediaHora || 0) * parseNumero(e.horas || 0)), 0),
           medicoes: medicoes.map((m) => ({ etapa: m.etapa || m.nome || '', percentual: parseBRLocal(m.percentual || 0), valor: parseBRLocal(m.valor || 0), dataPrevisao: m.dataPrevisao || m.data_previsao || '' })),
           terceirizados: (dados.terceirizados || []).map((t) => ({ descricao: t.descricao || t.servico || t.nome || '', custo: parseBRLocal(t.custo), fornecedor: t.fornecedor || '' })),
           despesas: (dados.despesas || []).map((d) => ({ descricao: d.descricao || '', valor: parseBRLocal(d.valor || 0) })),

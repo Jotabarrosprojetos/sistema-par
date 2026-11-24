@@ -1,5 +1,6 @@
 ﻿const express = require('express');
 const { authMiddleware, authorize } = require('../middleware/auth');
+const { parseDinheiro } = require('../utils/dinheiro');
 const opp = require('../services/oppService');
 
 const router = express.Router();
@@ -50,11 +51,7 @@ router.get('/os-para-vincular', authMiddleware, async (req, res, next) => {
       .replace(/[^A-Z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim()
 
     const pBRlocal = v => {
-      const s = String(v || '0').trim()
-      if (s.includes(',')) return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0
-      const parts = s.split('.')
-      if (parts.length === 2 && parts[1].length <= 2) return parseFloat(s) || 0
-      return parseFloat(s.replace(/\./g, '')) || 0
+      return parseDinheiro(v);
     }
 
     // Tenta casar automaticamente projeto PAR com OS do OPP
@@ -755,11 +752,7 @@ router.get('/extrato-por-projeto', async (req, res, next) => {
     // menor que o real). Mesmo parser já usado em outras rotas desse mesmo
     // arquivo (linhas ~975 e ~1038) pra esse mesmo campo.
     const pBR = (v) => {
-      const s = String(v || 0).trim();
-      if (s.includes(',')) return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
-      const parts = s.split('.');
-      if (parts.length === 2 && parts[1].length <= 2) return parseFloat(s) || 0;
-      return parseFloat(s.replace(/\./g, '')) || 0;
+      return parseDinheiro(v);
     };
 
     const [
@@ -1162,7 +1155,7 @@ router.post('/corrigir-medicoes', authMiddleware, async (req, res, next) => {
     // Converte valor: se já for number JS usa direto; se string BR (25.020,00) converte
     const toNum = v => {
       if (typeof v === 'number') return v;
-      return parseFloat(String(v || 0).replace(/\./g, '').replace(',', '.')) || 0;
+      return parseDinheiro(v);
     };
 
     const planejamentos = await db.readSheet('Planejamentos');
@@ -1246,11 +1239,7 @@ router.get('/diagnostico-medicoes-1000x', authMiddleware, async (req, res, next)
       : require('../services/googleSheetsService');
 
     const pBR = (v) => {
-      const s = String(v || 0).trim();
-      if (s.includes(',')) return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
-      const parts = s.split('.');
-      if (parts.length === 2 && parts[1].length <= 2) return parseFloat(s) || 0;
-      return parseFloat(s.replace(/\./g, '')) || 0;
+      return parseDinheiro(v);
     };
 
     const [medicoes, planejamentos, projetos] = await Promise.all([
@@ -1309,11 +1298,7 @@ router.post('/corrigir-medicoes-1000x', authMiddleware, async (req, res, next) =
       : require('../services/googleSheetsService');
 
     const pBR = (v) => {
-      const s = String(v || 0).trim();
-      if (s.includes(',')) return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
-      const parts = s.split('.');
-      if (parts.length === 2 && parts[1].length <= 2) return parseFloat(s) || 0;
-      return parseFloat(s.replace(/\./g, '')) || 0;
+      return parseDinheiro(v);
     };
 
     const [medicoes, planejamentos, projetos] = await Promise.all([

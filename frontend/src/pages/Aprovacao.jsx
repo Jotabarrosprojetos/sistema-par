@@ -4,10 +4,11 @@ import { toast } from 'react-hot-toast'
 import { ShieldCheckIcon, LockClosedIcon, DocumentArrowDownIcon } from '@heroicons/react/24/outline'
 import api from '../utils/api'
 import { useTheme } from '../contexts/ThemeContext'
+import { parseDinheiro } from '../utils/dinheiro'
 
 const fmt = (v) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v || 0)
 const fmtCur = (v) => Number(v || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-const parseBR = (v) => parseFloat(String(v || 0).replace(/\./g, '').replace(',', '.')) || 0
+const parseBR = (v) => parseDinheiro(v)
 
 function gerarPDFBaseline(b, nomeProjeto) {
   const linhas = (arr, fn) => arr.map(fn).join('')
