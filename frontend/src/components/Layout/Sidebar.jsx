@@ -4,7 +4,7 @@ import {
   HomeIcon, FolderIcon, CalculatorIcon, UsersIcon,
   ChartBarIcon, DocumentTextIcon, Cog6ToothIcon,
   ArrowUpTrayIcon, BellAlertIcon, ShieldCheckIcon, BuildingOffice2Icon,
-  BanknotesIcon, KeyIcon, ClipboardDocumentListIcon, ClockIcon, PresentationChartLineIcon, ScaleIcon, DocumentChartBarIcon,
+  BanknotesIcon, KeyIcon, ClipboardDocumentListIcon, ClockIcon, PresentationChartLineIcon, ScaleIcon, DocumentChartBarIcon, CalendarDaysIcon,
 } from '@heroicons/react/24/outline'
 import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
@@ -30,6 +30,7 @@ const NAV_GROUPS = [
       { to: '/dashboard-financeiro',  label: 'Dashboard Financeiro',     icon: PresentationChartLineIcon,   perfis: ['Financeiro','Coordenador','Admin','Diretoria'] },
       { to: '/baseline-real',         label: 'Baseline x Real',          icon: ScaleIcon,                   perfis: ['Financeiro','Coordenador','Admin','Diretoria'] },
       { to: '/relatorios-gerenciais', label: 'Relatórios Gerenciais',    icon: DocumentChartBarIcon,        perfis: ['Financeiro','Coordenador','Admin','Diretoria'] },
+      { to: '/mudancas-de-data',      label: 'Mudanças de data',         icon: CalendarDaysIcon,            perfis: ['Financeiro','Comercial','Coordenador','Admin','Diretoria','Leitura-Financeiro'] },
     ],
   },
   {

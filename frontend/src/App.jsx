@@ -26,6 +26,7 @@ import VincularOS from './pages/VincularOS'
 import DashboardFinanceiro from './pages/DashboardFinanceiro'
 import BaselineReal from './pages/BaselineReal'
 import RelatoriosGerenciais from './pages/RelatoriosGerenciais'
+import MudancasDeData from './pages/MudancasDeData'
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
@@ -79,6 +80,7 @@ export default function App() {
               <Route path="dashboard-financeiro" element={<DashboardFinanceiro />} />
               <Route path="baseline-real" element={<BaselineReal />} />
               <Route path="relatorios-gerenciais" element={<RelatoriosGerenciais />} />
+              <Route path="mudancas-de-data" element={<MudancasDeData />} />
             </Route>
           </Routes>
         </AlertProvider>
