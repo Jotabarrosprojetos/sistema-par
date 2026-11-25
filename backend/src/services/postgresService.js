@@ -100,6 +100,10 @@ async function ensureSheetsExist() {
       "Data_Geracao" TEXT, "Setor_Destino" TEXT, "Visto_Por" TEXT, "Status" TEXT,
       "Nivel" TEXT, "Link_ClickUp" TEXT
     )`,
+    `CREATE TABLE IF NOT EXISTS "Conferencias_Diarias" (
+      "ID" TEXT PRIMARY KEY, "Data" TEXT, "Status" TEXT, "Gerado_Em" TEXT, "Resumo_JSON" TEXT,
+      "Achados_JSON" TEXT, "Resolvidos_JSON" TEXT, "Novos" TEXT, "Erro" TEXT
+    )`,
     `CREATE TABLE IF NOT EXISTS "Log_Importacoes" (
       "ID" TEXT PRIMARY KEY, "Data_Upload" TEXT, "Arquivo" TEXT, "Usuario" TEXT,
       "Registros_Processados" TEXT, "Erros" TEXT, "Status" TEXT, "Detalhes" TEXT

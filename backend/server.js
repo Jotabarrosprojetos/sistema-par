@@ -18,6 +18,7 @@ const { initWebSocket } = require('./src/services/websocketService');
 const { syncClickUp } = require('./src/services/clickupService');
 const { checkAllAlerts } = require('./src/services/alertService');
 const { verificarMudancasDeData } = require('./src/services/mudancasDeDataService');
+const { executarConferencia } = require('./src/services/conferenciaDiariaService');
 const errorHandler = require('./src/middleware/errorHandler');
 
 // Rotas
@@ -39,6 +40,7 @@ const auditoriaRoutes = require('./src/routes/auditoria');
 const dashboardFinanceiroRoutes = require('./src/routes/dashboard-financeiro');
 const baselineRealRoutes = require('./src/routes/baseline-real');
 const mudancasDeDataRoutes = require('./src/routes/mudancas-de-data');
+const conferenciaDiariaRoutes = require('./src/routes/conferencia-diaria');
 
 const app = express();
 const server = http.createServer(app);
@@ -78,6 +80,7 @@ app.use('/api/auditoria', auditoriaRoutes);
 app.use('/api/dashboard-financeiro', dashboardFinanceiroRoutes);
 app.use('/api/baseline-real', baselineRealRoutes);
 app.use('/api/mudancas-de-data', mudancasDeDataRoutes);
+app.use('/api/conferencia-diaria', conferenciaDiariaRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -181,6 +184,16 @@ cron.schedule('0 8 * * 1-5', async () => {
   } catch (err) {
     console.error('[CRON] Erro na verificação de alertas:', err.message);
   }
+});
+
+// Conferência diária Par x OPP (portão de dados de 30 dias): todo dia, inclusive fim de semana.
+// 09h30 UTC = 06h30 em Fortaleza (UTC-3, sem horário de verão). Só lê o Par e o OPP e grava o retrato do dia;
+// se o OPP falhar, o dia fica como "falha_opp" (sem conferência), nunca como "zero achados".
+cron.schedule('30 9 * * *', async () => {
+  try {
+    const r = await executarConferencia(db);
+    console.log(`[CRON] Conferência diária ${r.data}: ${r.status}${r.achados !== undefined ? `, ${r.achados} achado(s), ${r.novos} novo(s), ${r.resolvidos} resolvido(s)` : ''}.`);
+  } catch (e) { console.error('[CRON] Erro na conferência diária:', e.message); }
 });
 
 // ── Serve frontend (build de produção) ───────────────────────────────────────

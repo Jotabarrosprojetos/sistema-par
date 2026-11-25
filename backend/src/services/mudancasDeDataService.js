@@ -1,5 +1,6 @@
 const { v4: uuidv4 } = require('uuid');
-const { parseDinheiro, arredondar } = require('../utils/dinheiro');
+const { arredondar } = require('../utils/dinheiro');
+const { extrairMedicoes, paraTitulo } = require('../utils/conferenciaDiaria');
 const {
   detectarMudancasDeData, classificarSemTitulo, classificarSemMedicao, PRAZO_DIAS, TOLERANCIA_DIAS,
 } = require('../utils/datasRecebimento');
@@ -21,15 +22,6 @@ async function lerReceitasOPP() {
   return todos;
 }
 
-const paraTitulo = (r) => ({
-  id: r.id_conta_rec || r.id_rec || r.id || '',
-  chave: r.id_centro_custos && String(r.id_centro_custos) !== '0' ? String(r.id_centro_custos) : undefined,
-  valor: parseDinheiro(r.valor_rec),
-  vencimento: r.vencimento_rec,
-  descricao: `${r.nome_conta || ''} ${r.nome_cliente || ''}`.trim(),
-  liquidado: r.liquidado_rec === 'Sim',
-});
-
 /**
  * Calcula tudo da tela "Mudancas de data": divergencias de data, medicoes do Par sem titulo aberto no OPP
  * e titulos abertos do OPP sem medicao aprovada. So le; nunca escreve no OPP.
@@ -38,29 +30,7 @@ const paraTitulo = (r) => ({
 async function calcularMudancasDeData(db, { receitas, hoje = new Date() } = {}) {
   const [planejamentos, receitasOPP] = await Promise.all([db.readSheet('Planejamentos'), receitas || lerReceitasOPP()]);
 
-  const medicoes = []; const chavesComPlano = new Set(); const semVinculo = new Set();
-  for (const plan of planejamentos.filter((p) => p.Status === 'Aprovado')) {
-    let dados = {};
-    try { dados = JSON.parse(plan.Dados_JSON || '{}'); } catch { /* sem JSON */ }
-    const d = dados._baseline || dados;
-    const chave = plan.ID_Centro_Custo_OPP ? String(plan.ID_Centro_Custo_OPP) : undefined;
-    const temOS = /^[0-9, ]+$/.test(String(plan.Nr_OS_OPP || ''));
-    if (chave) chavesComPlano.add(chave);
-    if (!chave && !temOS) semVinculo.add(plan.ID);
-    (d.medicoes || d.medicoesCronograma || []).forEach((m, i) => {
-      medicoes.push({
-        id: `${plan.ID}:${i}`,
-        planoId: plan.ID,
-        projeto: plan.Nome_Projeto || '',
-        idProjeto: plan.ID_Projeto,
-        chave,
-        etapa: String(m.etapa || m.nome || `Medição ${i + 1}`),
-        valor: parseDinheiro(m.valorPlan || m.valor || m.valorPlanejado || 0),
-        dataPrevisao: m.dataPrevisao || m.dataPrevista || '',
-        linkClickUp: plan.Link_ClickUp || dados.linkClickUp || '',
-      });
-    });
-  }
+  const { medicoes, chavesComPlano, semVinculo } = extrairMedicoes(planejamentos);
 
   const titulos = receitasOPP.map(paraTitulo);
   const abertos = titulos.filter((t) => !t.liquidado);
@@ -119,4 +89,4 @@ async function verificarMudancasDeData(db, opcoes = {}) {
   return { criado: false, divergentes: n, total };
 }
 
-module.exports = { calcularMudancasDeData, verificarMudancasDeData, linkOPP, TIPO_ALERTA };
+module.exports = { lerReceitasOPP, calcularMudancasDeData, verificarMudancasDeData, linkOPP, TIPO_ALERTA };
