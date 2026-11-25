@@ -25,7 +25,9 @@ const linhaAchado = (a) => `- ${a.projeto || 'sem projeto'}: ${a.descricao}${a.v
 function grupo(titulo, itens, extra = '') {
   if (!itens.length) return [];
   const L = [`${titulo} (${itens.length})${extra}`];
-  itens.slice(0, MAX_POR_GRUPO).forEach((a) => L.push(linhaAchado(a)));
+  // Dentro do grupo, por tipo de achado e do maior valor para o menor, para a Roberta ler um tipo de cada vez.
+  const ordenados = [...itens].sort((a, b) => (a.codigo || '').localeCompare(b.codigo || '') || (b.valor || 0) - (a.valor || 0));
+  ordenados.slice(0, MAX_POR_GRUPO).forEach((a) => L.push(linhaAchado(a)));
   if (itens.length > MAX_POR_GRUPO) L.push(`- e mais ${itens.length - MAX_POR_GRUPO} itens deste grupo, que aparecem no retrato do dia`);
   L.push('');
   return L;
