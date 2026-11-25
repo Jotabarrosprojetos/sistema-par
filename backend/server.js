@@ -18,7 +18,7 @@ const { initWebSocket } = require('./src/services/websocketService');
 const { syncClickUp } = require('./src/services/clickupService');
 const { checkAllAlerts } = require('./src/services/alertService');
 const { verificarMudancasDeData } = require('./src/services/mudancasDeDataService');
-const { executarConferencia } = require('./src/services/conferenciaDiariaService');
+const { executarConferencia, garantirRetratoDeHoje } = require('./src/services/conferenciaDiariaService');
 const errorHandler = require('./src/middleware/errorHandler');
 
 // Rotas
@@ -195,6 +195,16 @@ cron.schedule('30 9 * * *', async () => {
     console.log(`[CRON] Conferência diária ${r.data}: ${r.status}${r.achados !== undefined ? `, ${r.achados} achado(s), ${r.novos} novo(s), ${r.resolvidos} resolvido(s)` : ''}.`);
   } catch (e) { console.error('[CRON] Erro na conferência diária:', e.message); }
 });
+
+// Se o servidor estava fora do ar às 06h30, recupera o retrato do dia pouco depois de subir (só uma vez).
+if (!CRON_DESLIGADO) {
+  setTimeout(async () => {
+    try {
+      const r = await garantirRetratoDeHoje(db);
+      if (r.executado) console.log(`[Startup] Conferência diária recuperada: ${r.status}.`);
+    } catch (e) { console.error('[Startup] Erro ao recuperar a conferência diária:', e.message); }
+  }, 120000);
+}
 
 // ── Serve frontend (build de produção) ───────────────────────────────────────
 const frontendDist = path.join(__dirname, '../frontend/dist');

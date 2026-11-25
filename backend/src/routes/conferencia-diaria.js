@@ -5,7 +5,8 @@ const db = process.env.USE_POSTGRES === 'true' ? require('../services/postgresSe
 
 const router = express.Router();
 router.use(authMiddleware);
-// Mesmos perfis de leitura financeira da tela Mudancas de data (Admin sempre passa).
+// Perfis de leitura financeira, um pouco mais estreitos que a tela Mudancas de data (que tambem admite PO e
+// Comercial). Admin sempre passa.
 // Somente leitura: o retrato do dia e gravado pelo cron do servidor.
 router.use(authorize('Financeiro', 'Coordenador', 'Diretoria', 'Leitura-Financeiro'));
 

@@ -20,8 +20,16 @@ const lerJSON = (s, padrao) => { try { return JSON.parse(s || ''); } catch { ret
 
 async function gravar(db, linha) {
   const existentes = await db.readSheet(TABELA);
-  if (existentes.some((r) => r.ID === linha.ID)) await db.updateRowById(TABELA, 'ID', linha.ID, linha);
+  const doDia = existentes.find((r) => r.ID === linha.ID);
+  // Uma falha nunca apaga um retrato valido do mesmo dia.
+  if (doDia && doDia.Status === 'ok' && linha.Status !== 'ok') return false;
+  if (doDia) await db.updateRowById(TABELA, 'ID', linha.ID, linha);
   else await db.insertRow(TABELA, linha);
+  return true;
+}
+
+async function gravarFalha(db, data, geradoEm, status, motivo) {
+  await gravar(db, { ID: data, Data: data, Status: status, Gerado_Em: geradoEm, Resumo_JSON: '{}', Achados_JSON: '[]', Resolvidos_JSON: '[]', Novos: '0', Erro: String(motivo).slice(0, 500) });
 }
 
 /**
@@ -35,11 +43,22 @@ async function executarConferencia(db, { receitas, agora = new Date() } = {}) {
   try {
     receitasOPP = receitas || await require('./mudancasDeDataService').lerReceitasOPP();
   } catch (e) {
-    await gravar(db, { ID: data, Data: data, Status: 'falha_opp', Gerado_Em: geradoEm, Resumo_JSON: '{}', Achados_JSON: '[]', Resolvidos_JSON: '[]', Novos: '0', Erro: String(e.message || e).slice(0, 500) });
+    await gravarFalha(db, data, geradoEm, 'falha_opp', e.message || e);
     return { data, status: 'falha_opp', erro: e.message };
   }
+  // O OPP responder 200 com lista vazia nao e "zero divergencias": a empresa tem titulos. Tratar como falha.
+  if (!Array.isArray(receitasOPP) || receitasOPP.length === 0) {
+    await gravarFalha(db, data, geradoEm, 'falha_opp', 'OPP devolveu lista vazia de contas a receber');
+    return { data, status: 'falha_opp', erro: 'OPP devolveu lista vazia' };
+  }
 
-  const planejamentos = await db.readSheet('Planejamentos');
+  let planejamentos;
+  try {
+    planejamentos = await db.readSheet('Planejamentos');
+  } catch (e) {
+    await gravarFalha(db, data, geradoEm, 'falha_par', `Falha ao ler Planejamentos: ${e.message || e}`);
+    return { data, status: 'falha_par', erro: e.message };
+  }
   const conf = montarConferencia(planejamentos, receitasOPP, { hoje: agora });
 
   const retratos = await db.readSheet(TABELA);
@@ -52,6 +71,20 @@ async function executarConferencia(db, { receitas, agora = new Date() } = {}) {
     Achados_JSON: JSON.stringify(cmp.achados), Resolvidos_JSON: JSON.stringify(cmp.resolvidos), Novos: String(cmp.novos), Erro: '',
   });
   return { data, status: 'ok', achados: cmp.achados.length, novos: cmp.novos, resolvidos: cmp.resolvidos.length };
+}
+
+/**
+ * Recupera o dia se o servidor estava fora do ar as 06h30: se ja passou das 06h30 em Fortaleza e nao ha retrato
+ * valido de hoje, executa agora. Chamada uma vez, pouco depois de o servidor subir.
+ */
+async function garantirRetratoDeHoje(db, { agora = new Date() } = {}) {
+  const hora = Number(new Intl.DateTimeFormat('en-GB', { timeZone: FUSO, hour: '2-digit', hour12: false }).format(agora));
+  const min = Number(new Intl.DateTimeFormat('en-GB', { timeZone: FUSO, minute: '2-digit' }).format(agora));
+  if (hora < 6 || (hora === 6 && min < 30)) return { executado: false, motivo: 'ainda antes das 06h30' };
+  const data = dataLocal(agora);
+  const ja = (await db.readSheet(TABELA)).some((r) => r.Data === data && r.Status === 'ok');
+  if (ja) return { executado: false, motivo: 'ja existe retrato de hoje' };
+  return { executado: true, ...(await executarConferencia(db, { agora })) };
 }
 
 /** Lista os retratos (mais recente primeiro) sem o detalhe. */
@@ -85,4 +118,4 @@ function diasSemRetrato(retratos, de, ate) {
   return faltam;
 }
 
-module.exports = { TABELA, dataLocal, executarConferencia, listarRetratos, lerRetrato, diasSemRetrato };
+module.exports = { TABELA, dataLocal, executarConferencia, garantirRetratoDeHoje, listarRetratos, lerRetrato, diasSemRetrato };
