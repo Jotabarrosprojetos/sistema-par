@@ -71,7 +71,7 @@ function paraTitulo(r) {
 // Palavras que marcam lancamento de tesouraria na descricao do titulo (lido em 25/11/2026: "RESGATE CDB DI BANCO
 // ITAU", "VENCIMENTO CDB BANCO ITAU"). Lista curta de proposito: so o que e inequivoco, para nao esconder cliente.
 // A palavra tem de abrir a descricao (nome da conta), para "PREFEITURA DE RESGATE" nao ser escondida.
-const TESOURARIA = /^\s*(CDB\b|RESGATE\b|VENCIMENTO CDB\b|REND(IMENTOS?)?\b|EMPR[EÉ]STIMO\b|TRANSFER[EÊ]NCIA\b|APLICA[CÇ][AÃ]O\b|CART[AÃ]O DE CR[EÉ]DITO\b)/i;
+const TESOURARIA = /^\s*(CDB\b|RESGATE\b|VENCIMENTO CDB\b|RENDIMENTOS?\b|EMPR[EÉ]STIMO\b|TRANSFER[EÊ]NCIA\b|APLICA[CÇ][AÃ]O\b|CART[AÃ]O DE CR[EÉ]DITO\b)/i;
 const ehTesouraria = (t) => TESOURARIA.test(String(t.descricao || '').normalize('NFC'));
 
 const soma = (xs, f) => arredondar(xs.reduce((s, x) => s + (f(x) || 0), 0), 2);

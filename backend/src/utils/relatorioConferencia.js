@@ -37,7 +37,8 @@ function grupo(titulo, itens, extra = '') {
  * retrato: { data, status, erro, resumo, achados, resolvidos } como devolve GET /api/conferencia-diaria/AAAA-MM-DD
  * diasSemConferencia: datas (AAAA-MM-DD) desde o ultimo relatorio enviado sem retrato valido
  */
-function gerarRelatorio(retrato, { diasSemConferencia = [] } = {}) {
+function gerarRelatorio(entrada, { diasSemConferencia = [] } = {}) {
+  const retrato = { ...entrada, achados: entrada.achados || [], resolvidos: entrada.resolvidos || [] };
   const data = retrato.data;
   const L = ['Roberta, bom dia.', ''];
 
@@ -46,7 +47,7 @@ function gerarRelatorio(retrato, { diasSemConferencia = [] } = {}) {
   } else {
     const r = retrato.resumo || {};
     const novos = retrato.achados.filter((a) => a.novo);
-    const antigos = retrato.achados.filter((a) => !a.novo);
+    const antigos = retrato.achados.filter((a) => !a.novo).map((a) => ({ ...a, desde: a.desde || data }));
     const parados = antigos.filter((a) => diasUteis(a.desde, data) > 2);
     L.push(`Segue a conferência do Par com o OPP de ${brData(data)}${r.comparadoCom ? `, comparada com a de ${brData(r.comparadoCom)}` : ', a primeira, sem dia anterior para comparar'}.`, '');
     L.push('Resumo do dia');
@@ -59,7 +60,7 @@ function gerarRelatorio(retrato, { diasSemConferencia = [] } = {}) {
 
     if (!retrato.achados.length && !retrato.resolvidos.length) L.push('Nenhum achado hoje.', '');
     L.push(...grupo('Novos hoje', novos));
-    L.push(...grupo('Abertos há mais de 2 dias úteis', parados.sort((a, b) => b.diasAberto - a.diasAberto), ', do mais antigo para o mais novo'));
+    L.push(...grupo('Abertos há mais de 2 dias úteis', parados.sort((a, b) => b.diasAberto - a.diasAberto)));
     const demais = antigos.filter((a) => !parados.includes(a));
     L.push(...grupo('Continuam em aberto, com até 2 dias úteis', demais));
     L.push(...grupo('Resolvidos desde o dia anterior', retrato.resolvidos.map((x) => ({ ...x, descricao: x.descricao, chave: x.chave }))));
