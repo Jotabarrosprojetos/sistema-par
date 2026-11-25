@@ -56,6 +56,20 @@ test('montarConferencia: cada situacao vira o achado certo, e o que e esperado n
   assert.equal(r.resumo.porCodigo.DATA_DIVERGENTE.quantidade, 1);
 });
 
+test('tesouraria com centro de custo (resgate de CDB) nao vira achado, mas entra no resumo', () => {
+  const { planejamentos, receitas } = cenario();
+  receitas.push(rec(777, '222758', '2.800.000,19', '2026-10-02', false, 'RESGATE CDB DI BANCO ITAÚ'));
+  receitas.push(rec(778, '222758', '67.051,19', '2026-08-18', false, 'VENCIMENTO CDB BANCO ITAÚ'));
+  const r = montarConferencia(planejamentos, receitas, { hoje: HOJE });
+  assert.ok(!r.achados.some((a) => /777|778/.test(a.chave)), 'CDB nao e achado');
+  assert.equal(r.resumo.tesourariaSemCentroDeCusto.quantidade, 3, 'o lancamento 555 sem centro de custo e os dois CDB');
+  assert.ok(r.resumo.tesourariaSemCentroDeCusto.valor > 2800000);
+  // cliente com nome parecido nao e escondido
+  receitas.push(rec(779, '88', '5.000,00', '2026-12-10', false, 'MEDIÇÃO 02 PREFEITURA DE RESGATE'));
+  const r2 = montarConferencia(planejamentos, receitas, { hoje: HOJE });
+  assert.ok(r2.achados.some((a) => a.chave === 'TITULO_SEM_PLANEJAMENTO|779'), 'palavra no meio do nome nao esconde o titulo de cliente');
+});
+
 test('montarConferencia: lista vazia e Dados_JSON quebrado nao derrubam o calculo', () => {
   const r = montarConferencia([{ ID: 'x', Status: 'Aprovado', Nome_Projeto: 'Quebrado', Dados_JSON: '{nao e json' }], [], { hoje: HOJE });
   assert.equal(r.resumo.medicoes, 0);

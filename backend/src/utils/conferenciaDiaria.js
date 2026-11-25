@@ -68,6 +68,12 @@ function paraTitulo(r) {
   };
 }
 
+// Palavras que marcam lancamento de tesouraria na descricao do titulo (lido em 25/11/2026: "RESGATE CDB DI BANCO
+// ITAU", "VENCIMENTO CDB BANCO ITAU"). Lista curta de proposito: so o que e inequivoco, para nao esconder cliente.
+// A palavra tem de abrir a descricao (nome da conta), para "PREFEITURA DE RESGATE" nao ser escondida.
+const TESOURARIA = /^\s*(CDB\b|RESGATE\b|VENCIMENTO CDB\b|REND(IMENTOS?)?\b|EMPR[EÉ]STIMO\b|TRANSFER[EÊ]NCIA\b|APLICA[CÇ][AÃ]O\b|CART[AÃ]O DE CR[EÉ]DITO\b)/i;
+const ehTesouraria = (t) => TESOURARIA.test(String(t.descricao || '').normalize('NFC'));
+
 const soma = (xs, f) => arredondar(xs.reduce((s, x) => s + (f(x) || 0), 0), 2);
 
 /**
@@ -77,7 +83,11 @@ const soma = (xs, f) => arredondar(xs.reduce((s, x) => s + (f(x) || 0), 0), 2);
  */
 function montarConferencia(planejamentos, receitasOPP, { hoje = new Date() } = {}) {
   const { medicoes, chavesComPlano, semVinculo, planos } = extrairMedicoes(planejamentos);
-  const titulos = receitasOPP.map(paraTitulo);
+  const todos = receitasOPP.map(paraTitulo);
+  // Lancamentos de tesouraria (resgate de CDB, emprestimo, rendimento...) ficam em Contas a receber do OPP, as
+  // vezes com centro de custo, mas nao sao recebimento de cliente: saem da conferencia e entram so no resumo.
+  const tesourariaPorNome = todos.filter(ehTesouraria);
+  const titulos = todos.filter((t) => !ehTesouraria(t));
   const abertos = titulos.filter((t) => !t.liquidado);
   const pagos = titulos.filter((t) => t.liquidado);
   const r = detectarMudancasDeData(medicoes, abertos);
@@ -143,7 +153,11 @@ function montarConferencia(planejamentos, receitasOPP, { hoje = new Date() } = {
       paresConferidos: r.resumo.pares,
       paresNaRegra: r.resumo.ok,
       porCodigo,
-      tesourariaSemCentroDeCusto: { quantidade: tesouraria.length, valor: soma(tesouraria, (t) => t.valor), nota: 'lançamentos sem centro de custo (CDB, empréstimo, rendimento); não entram como achado' },
+      tesourariaSemCentroDeCusto: {
+        quantidade: tesouraria.length + tesourariaPorNome.length,
+        valor: soma([...tesouraria, ...tesourariaPorNome], (t) => t.valor),
+        nota: 'lançamentos de tesouraria (CDB, resgate, empréstimo, rendimento, transferência, cartão) e sem centro de custo; não entram como achado',
+      },
       totalPlanejadoPar: soma(medicoes, (m) => m.valor),
     },
   };
